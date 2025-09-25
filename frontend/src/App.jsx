@@ -1,8 +1,6 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 
 function App() {
-  const transferSectionRef = useRef(null);
-
   const [formData, setFormData] = useState({
     origin: "",
     destination: "",
@@ -12,6 +10,18 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [transferResult, setTransferResult] = useState(null);
   const [error, setError] = useState(null);
+
+  const extractPlaylistId = (playlistUrl) => {
+    let playlistId = "";
+    switch (formData.origin) {
+      case "spotify":
+        playlistId = playlistUrl.slice(-22);
+        break;
+      case "youtube":
+        playlistId = playlistUrl.slice(-34);
+    }
+    return playlistId;
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -27,15 +37,10 @@ function App() {
     setTransferResult(null);
     setError(null);
 
+    let playlistUrl = formData.playlistUrl;
+    let playlistId = extractPlaylistId(playlistUrl);
+
     if (formData.origin === "spotify" && formData.destination === "youtube") {
-      const playlistId = getPlaylistId(formData.playlistUrl);
-
-      if (!playlistId) {
-        setError("Invalid playlist URL.");
-        setIsLoading(false);
-        return;
-      }
-
       try {
         const response = await fetch(
           `http://localhost:3000/transferToYoutube/${playlistId}`,
@@ -63,38 +68,22 @@ function App() {
     }
   };
 
-  const handleScrollToTransfer = () => {
-    transferSectionRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  const getPlaylistId = (url) => {
-    try {
-      const urlObject = new URL(url);
-      const pathParts = urlObject.pathname.split("/");
-      const playlistIndex = pathParts.findIndex((part) => part === "playlist");
-      if (playlistIndex !== -1 && pathParts[playlistIndex + 1]) {
-        return pathParts[playlistIndex + 1];
-      }
-      return null;
-    } catch (error) {
-      console.error("Invalid URL format", error);
-      return null;
-    }
-  };
-
   return (
     <div>
-      
-      <div id="navbar" className="mt-28 mb-28 text-center">
-        <h1 className="text-8xl mb-10 text-neutral-50 tracking-wide">Playlist Port</h1>
-        <p className="text-3xl text-neutral-200">
+      <div id="navbar" className="mt-20 mb-20 text-center">
+        <h1 className="text-7xl font-medium mb-6 text-neutral-50 tracking-wide">
+          Playlist Port
+        </h1>
+        <p className="text-2xl xs:text-xl text-neutral-200">
           Transfer your playlists through streaming services.
         </p>
       </div>
 
-      <div className="place-self-center rounded-4xl w-5xl flex justify-between items-center">
-        <div className="bg-neutral-900 h-[22rem] w-[26rem] rounded-4xl flex flex-col items-center justify-evenly text-neutral-100 shadow-lg">
-          <p className="text-4xl text-center">Select origin<br></br>and destination</p>
+      <form className="place-self-center w-5xl flex justify-between items-center xs:w-xl xs:flex-col">
+        <div className="bg-neutral-900 h-[22rem] w-[26rem] rounded-4xl flex flex-col items-center justify-evenly text-neutral-100 shadow-lg xs:mb-28">
+          <p className="text-4xl font-medium text-center">
+            Select origin<br></br>and destination
+          </p>
           <div className="w-xs p-2">
             <div className="flex items-center justify-evenly mb-10">
               <p className="text-2xl w-20 text-center">From</p>
@@ -104,7 +93,16 @@ function App() {
                 required
                 value={formData.origin}
                 onChange={handleChange}
-                className="text-center text-xl bg-neutral-700 text-neutral-500 p-2 rounded-full"
+                className="
+                  appearance-none 
+                  text-center text-xl 
+                  bg-neutral-800 text-neutral-300 
+                  px-2.5 py-2 
+                  rounded-full 
+                  border-2 border-neutral-800 
+                  hover:bg-neutral-700
+                  focus:outline-none focus:ring-0 focus:border-neutral-500
+                "
               >
                 <option value="" disabled>
                   Select
@@ -116,12 +114,21 @@ function App() {
             <div className="flex items-center justify-evenly">
               <p className="text-2xl w-20 text-center">To</p>
               <select
-                name="origin"
-                id="origin-service"
+                name="destination"
+                id="destination-service"
                 required
-                value={formData.origin}
+                value={formData.destination}
                 onChange={handleChange}
-                className="text-center text-xl bg-neutral-700 text-neutral-500 p-2 rounded-full"
+                className="
+                  appearance-none 
+                  text-center text-xl 
+                  bg-neutral-800 text-neutral-300 
+                  px-2.5 py-2 
+                  rounded-full 
+                  border-2 border-neutral-800 
+                  hover:bg-neutral-700
+                  focus:outline-none focus:ring-0 focus:border-neutral-500
+                "
               >
                 <option value="" disabled>
                   Select
@@ -133,25 +140,31 @@ function App() {
           </div>
         </div>
 
-        <div className="bg-neutral-900 h-[22rem] w-[26rem] rounded-4xl flex flex-col items-center justify-evenly text-neutral-100 shadow-lg">
-          <p className="text-4xl text-center w-xs">Paste your<br></br>playlist URL</p>
+        <div className="bg-neutral-900 h-[22rem] w-[26rem] rounded-4xl flex flex-col items-center justify-evenly text-neutral-100 shadow-lg xs:mb-20">
+          <p className="text-4xl font-medium text-center w-xs">
+            Paste your<br></br>playlist URL
+          </p>
           <input
             type="text"
             name="playlistUrl"
             placeholder="Paste your playlist's URL"
-            className="bg-neutral-700 text-md py-2 px-4 rounded-full w-xs"
+            className="bg-neutral-700 text-xs py-2 px-4 rounded-full w-xs focus:outline-none focus:bg-neutral-600"
             value={formData.playlistUrl}
             onChange={handleChange}
             required
           />
 
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="text-xl w-30 bg-linear-to-r from-[#40BF40] to-[#7266CC] p-2 rounded-full"
-          >
-            {isLoading ? "Transferring..." : "Transfer"}
-          </button>
+          <div className="p-1 rounded-full bg-linear-to-r from-[#40BF40] to-[#7266CC]">
+            <button
+              type="submit"
+              disabled={isLoading}
+              onClick={handleSubmit}
+              className="text-xl font-medium w-30 bg-neutral-800/50 hover:bg-neutral-500/30 p-2 rounded-full shadow-lg"
+            >
+              {isLoading ? "Transferring..." : "Transfer"}
+            </button>
+          </div>
+
           {transferResult && (
             <div className="mt-4 p-2 bg-green-200 text-green-800 rounded">
               <p>Success! Your new playlist is here:</p>
@@ -171,7 +184,7 @@ function App() {
             </div>
           )}
         </div>
-      </div>
+      </form>
     </div>
   );
 }
