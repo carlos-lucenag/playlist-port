@@ -5,8 +5,6 @@ const session = require("express-session");
 const axios = require("axios");
 const querystring = require("querystring");
 const cors = require("cors");
-const { stat } = require("fs");
-const { ok } = require("assert");
 
 require("dotenv").config();
 
@@ -49,25 +47,6 @@ app.get("/login/spotify", (req, res) => {
       state: state,
     }).toString();
   res.redirect(authUrl);
-});
-
-app.get("/login/youtube", (req, res) => {
-  const scopes = ["https://www.googleapis.com/auth/youtube"];
-
-  const state = crypto.randomBytes(32).toString("hex");
-  req.session.youtube_state = state;
-
-  const authorizationUrl = oauth2Client.generateAuthUrl({
-    client_id: Y_CLIENT_ID,
-    redirect_uri: Y_REDIRECT_URI,
-    response_type: "code",
-    scope: scopes,
-    access_type: "offline",
-    state: state,
-    include_granted_scopes: true,
-  });
-
-  res.redirect(authorizationUrl);
 });
 
 app.get("/callback", async (req, res) => {
@@ -129,19 +108,34 @@ const oauth2Client = new google.auth.OAuth2(
   Y_REDIRECT_URI
 );
 
+app.get("/login/youtube", (req, res) => {
+  const scopes = ["https://www.googleapis.com/auth/youtube"];
+
+  const state = crypto.randomBytes(32).toString("hex");
+  req.session.youtube_state = state;
+
+  const authorizationUrl = oauth2Client.generateAuthUrl({
+    client_id: Y_CLIENT_ID,
+    redirect_uri: Y_REDIRECT_URI,
+    response_type: "code",
+    scope: scopes,
+    access_type: "offline",
+    state: state,
+    include_granted_scopes: true,
+  });
+
+  res.redirect(authorizationUrl);
+});
+
 app.get("/callback/youtube", async (req, res) => {
   const { code, state } = req.query;
 
   const storedState = req.session.youtube_state;
 
-  if (!state || state !== storedState) {
-    console.log("State:", state);
-    console.log("StoredState:", storedState);
-
+  if (!state || state !== storedState)
     return res.status(400).send("State mismatch.");
-  }
 
-  req.session.state = null;
+  req.session.youtube_state = null;
 
   try {
     const tokenResponse = await axios.post(
@@ -160,6 +154,7 @@ app.get("/callback/youtube", async (req, res) => {
 
     req.session.youtube_access_token = tokenResponse.data.access_token;
     req.session.youtube_refresh_token = tokenResponse.data.refresh_token;
+    return res.redirect("http://localhost:5173");
   } catch (err) {
     console.error(
       "Error while connecting to Youtube",
@@ -169,7 +164,7 @@ app.get("/callback/youtube", async (req, res) => {
   }
 });
 
-// Origin -> Youtube
+// Transfer to Youtube
 app.post("/transferToYoutube/:id", async (req, res) => {
   if (!req.session.spotify_access_token) {
     let authUrl = generateSpotifyAuthUrl();
@@ -311,9 +306,10 @@ async function addTracksToYoutubePlaylist(isrcArray, youtubePlaylistId) {
   return result;
 }
 
-// Origin -> Spotify
+// Transfer to Spotify
 app.get("/transferToSpotify", async (req, res) => {});
 
+// Checking connections
 app.get("/status/spotify", (req, res) => {
   if (req.session.spotify_access_token)
     res.status(200).send({ message: "Connected to Spotify." });

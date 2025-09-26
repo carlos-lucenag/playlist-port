@@ -1,4 +1,4 @@
-import { Routes, Route, Router, BrowserRouter } from "react-router-dom";
+import { Routes, Route, BrowserRouter } from "react-router-dom";
 import Connect from "./components/Connect";
 import Transfer from "./components/Transfer";
 

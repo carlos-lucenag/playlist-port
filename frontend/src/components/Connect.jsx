@@ -74,13 +74,21 @@ function Connect() {
       ]);
       setIsConnectedSpotify(spotify);
       setIsConnectedYoutube(youtube);
+
+      if (isConnectedSpotify && isConnectedYoutube)
+        window.location.href = "http://localhost:5173/transfer";
     } catch (err) {
       console.error("checkConnections error", err);
       setError("Failed to check connections");
     } finally {
       setIsChecking(false);
     }
-  }, [checkSpotifyConnection, checkYoutubeConnection]);
+  }, [
+    checkSpotifyConnection,
+    checkYoutubeConnection,
+    isConnectedSpotify,
+    isConnectedYoutube,
+  ]);
 
   useEffect(() => {
     (async () => {
