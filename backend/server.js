@@ -5,6 +5,8 @@ const session = require("express-session");
 const axios = require("axios");
 const querystring = require("querystring");
 const cors = require("cors");
+const { stat } = require("fs");
+const { ok } = require("assert");
 
 require("dotenv").config();
 
@@ -19,7 +21,12 @@ app.use(
   })
 );
 
-app.use(cors());
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  })
+);
 
 app.use(express.json());
 
@@ -28,7 +35,7 @@ const S_CLIENT_ID = process.env.SPOTIFY_CLIENT_ID;
 const S_CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET;
 const S_REDIRECT_URI = process.env.SPOTIFY_REDIRECT_URI;
 
-const loginSpotify = (req, res) => {
+app.get("/login/spotify", (req, res) => {
   const state = crypto.randomBytes(16).toString("hex");
   const scope =
     "playlist-read-private playlist-modify-private playlist-modify-public";
@@ -42,7 +49,26 @@ const loginSpotify = (req, res) => {
       state: state,
     }).toString();
   res.redirect(authUrl);
-};
+});
+
+app.get("/login/youtube", (req, res) => {
+  const scopes = ["https://www.googleapis.com/auth/youtube"];
+
+  const state = crypto.randomBytes(32).toString("hex");
+  req.session.youtube_state = state;
+
+  const authorizationUrl = oauth2Client.generateAuthUrl({
+    client_id: Y_CLIENT_ID,
+    redirect_uri: Y_REDIRECT_URI,
+    response_type: "code",
+    scope: scopes,
+    access_type: "offline",
+    state: state,
+    include_granted_scopes: true,
+  });
+
+  res.redirect(authorizationUrl);
+});
 
 app.get("/callback", async (req, res) => {
   const code = req.query.code || null;
@@ -103,32 +129,17 @@ const oauth2Client = new google.auth.OAuth2(
   Y_REDIRECT_URI
 );
 
-const loginYoutube = (req, res) => {
-  const scopes = ["https://www.googleapis.com/auth/youtube"];
-
-  const state = crypto.randomBytes(32).toString("hex");
-  req.session.state = state;
-
-  const authorizationUrl = oauth2Client.generateAuthUrl({
-    client_id: Y_CLIENT_ID,
-    redirect_uri: Y_REDIRECT_URI,
-    response_type: "code",
-    scope: scopes,
-    access_type: "offline",
-    state: state,
-    include_granted_scopes: true,
-  });
-
-  res.redirect(authorizationUrl);
-};
-
 app.get("/callback/youtube", async (req, res) => {
   const { code, state } = req.query;
 
-  const storedState = req.session.state;
+  const storedState = req.session.youtube_state;
 
-  if (!state || state !== storedState)
+  if (!state || state !== storedState) {
+    console.log("State:", state);
+    console.log("StoredState:", storedState);
+
     return res.status(400).send("State mismatch.");
+  }
 
   req.session.state = null;
 
@@ -158,12 +169,22 @@ app.get("/callback/youtube", async (req, res) => {
   }
 });
 
-// Playlist transfering
-
-// Spotify -> Youtube
+// Origin -> Youtube
 app.post("/transferToYoutube/:id", async (req, res) => {
   if (!req.session.spotify_access_token) {
-    loginSpotify();
+    let authUrl = generateSpotifyAuthUrl();
+    return res.status(401).json({
+      message: "Authentication with Spotify is required.",
+      redirectUrl: authUrl,
+    });
+  }
+
+  if (!req.session.youtube_access_token) {
+    let authUrl = generateYoutubeAuthUrl();
+    return res.status(401).json({
+      message: "Authentication with Youtube is required.",
+      redirectUrl: authUrl,
+    });
   }
 
   const playlistId = req.params.id;
@@ -290,73 +311,19 @@ async function addTracksToYoutubePlaylist(isrcArray, youtubePlaylistId) {
   return result;
 }
 
-// Youtube -> Spotify
+// Origin -> Spotify
 app.get("/transferToSpotify", async (req, res) => {});
 
-app.get("/auth/spotify/status", async (req, res) => {
-  const accessToken = req.session?.spotify_access_token;
-  if (!accessToken) {
-    return res.json({ authenticated: false });
-  }
-
-  try {
-    // Verifica se o token é válido fazendo uma chamada para a API do Spotify
-    const response = await axios.get("https://api.spotify.com/v1/me", {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
-
-    if (response.status === 200) {
-      res.json({
-        authenticated: true,
-        user: {
-          id: response.data.id,
-          name: response.data.display_name,
-        },
-      });
-    } else {
-      res.json({ authenticated: false });
-    }
-  } catch (error) {
-    console.error("Error validating Spotify token:", error);
-    res.json({ authenticated: false });
-  }
+app.get("/status/spotify", (req, res) => {
+  if (req.session.spotify_access_token)
+    res.status(200).send({ message: "Connected to Spotify." });
+  else res.status(400).send({ message: "Not connected to Spotify." });
 });
 
-app.get("/auth/youtube/status", async (req, res) => {
-  const accessToken = req.session?.youtube_access_token;
-  if (!accessToken) {
-    return res.json({ authenticated: false });
-  }
-
-  try {
-    oauth2Client.setCredentials({
-      access_token: accessToken,
-      refresh_token: req.session?.youtube_refresh_token,
-    });
-
-    // Verifica se o token é válido fazendo uma chamada para a API do YouTube
-    const response = await youtube.channels.list({
-      part: "snippet",
-      mine: true,
-    });
-
-    if (response.status === 200) {
-      res.json({
-        authenticated: true,
-        user: {
-          id: response.data.items[0].id,
-          name: response.data.items[0].snippet.title,
-        },
-      });
-    } else {
-      res.json({ authenticated: false });
-    }
-  } catch (error) {
-    console.error("Error validating YouTube token:", error);
-    res.json({ authenticated: false });
-  }
+app.get("/status/youtube", (req, res) => {
+  if (req.session.youtube_access_token)
+    res.status(200).send({ message: "Connected to Youtube." });
+  else res.status(400).send({ message: "Not connected to Youtube." });
 });
 
 app.listen(PORT, () => {

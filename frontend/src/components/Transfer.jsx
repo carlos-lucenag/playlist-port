@@ -106,7 +106,7 @@ function Transfer() {
 
   return (
     <div>
-      <form className="place-self-center w-5xl flex justify-between items-center xs:w-xl xs:flex-col">
+      <form className="w-5xl flex justify-between items-center xs:w-xl xs:flex-col">
         <div className="bg-neutral-900 h-[22rem] w-[26rem] rounded-4xl flex flex-col items-center justify-evenly text-neutral-100 shadow-lg xs:mb-28">
           <p className="text-4xl font-medium text-center">
             Select origin<br></br>and destination
