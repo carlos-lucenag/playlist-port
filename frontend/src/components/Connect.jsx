@@ -75,7 +75,7 @@ function Connect() {
       setIsConnectedSpotify(spotify);
       setIsConnectedYoutube(youtube);
 
-      if (isConnectedSpotify && isConnectedYoutube)
+      if (isConnectedSpotify === true && isConnectedYoutube === true)
         window.location.href = "http://localhost:5173/transfer";
     } catch (err) {
       console.error("checkConnections error", err);
