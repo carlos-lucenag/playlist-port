@@ -43,9 +43,9 @@ function Transfer() {
         window.location.href = data.redirectUrl;
         return
       }
-      
+
       if (!response.ok) throw new Error("Failed to transfer playlist, please try again.");
-      
+
       const data = await response.json();
       setTransferResult(data);
     } catch (error) {
@@ -68,9 +68,9 @@ function Transfer() {
           credentials: "include",
         }
       );
-      
+
       if (!response.ok) throw new Error("Failed to transfer playlist, please try again.");
-      
+
       const data = await response.json();
       setTransferResult(data);
     } catch (error) {
@@ -105,9 +105,9 @@ function Transfer() {
   };
 
   return (
-    <div>
-      <form className="w-5xl flex justify-between items-center xs:w-xl xs:flex-col">
-        <div className="bg-neutral-900 h-[22rem] w-[26rem] rounded-4xl flex flex-col items-center justify-evenly text-neutral-100 shadow-lg xs:mb-28">
+    <div className="mt-16 w-6xl">
+      <form className="flex justify-between items-center">
+        <div className="bg-[#0D0D0D] h-[24rem] w-[32rem] rounded-[6rem] flex flex-col items-center justify-evenly text-[#E6E6E6]">
           <p className="text-4xl font-medium text-center">
             Select origin<br></br>and destination
           </p>
@@ -122,13 +122,14 @@ function Transfer() {
                 onChange={handleChange}
                 className="
                   appearance-none 
+                  cursor-pointer
+                  w-24 h-10 
                   text-center text-xl 
-                  bg-neutral-800 text-neutral-300 
-                  px-2.5 py-2 
+                  bg-neutral-800 text-[#808080] 
                   rounded-full 
-                  border-2 border-neutral-800 
-                  hover:bg-neutral-700
-                  focus:outline-none focus:ring-0 focus:border-neutral-500
+                  border-2 border-[#808080] 
+                  hover:border-[#CCCCCC] hover:text-[#CCCCCC]
+                  focus:outline-none 
                 "
               >
                 <option value="" disabled>
@@ -148,13 +149,14 @@ function Transfer() {
                 onChange={handleChange}
                 className="
                   appearance-none 
+                  cursor-pointer
+                  w-24 h-10 
                   text-center text-xl 
-                  bg-neutral-800 text-neutral-300 
-                  px-2.5 py-2 
+                  bg-neutral-800 text-[#808080] 
                   rounded-full 
-                  border-2 border-neutral-800 
-                  hover:bg-neutral-700
-                  focus:outline-none focus:ring-0 focus:border-neutral-500
+                  border-2 border-[#808080] 
+                  hover:border-[#CCCCCC] hover:text-[#CCCCCC]
+                  focus:outline-none 
                 "
               >
                 <option value="" disabled>
@@ -167,7 +169,7 @@ function Transfer() {
           </div>
         </div>
 
-        <div className="bg-neutral-900 h-[22rem] w-[26rem] rounded-4xl flex flex-col items-center justify-evenly text-neutral-100 shadow-lg xs:mb-20">
+        <div className="bg-[#0D0D0D] h-[24rem] w-[32rem] rounded-[6rem] flex flex-col items-center justify-evenly text-[#E6E6E6]">
           <p className="text-4xl font-medium text-center w-xs">
             Paste your<br></br>playlist URL
           </p>
@@ -175,22 +177,20 @@ function Transfer() {
             type="text"
             name="playlistUrl"
             placeholder="Paste your playlist's URL"
-            className="bg-neutral-700 text-xs py-2 px-4 rounded-full w-xs focus:outline-none focus:bg-neutral-600"
+            className="appearance-none bg-neutral-800 border-2 border-[#808080] text-[#808080] text-sm py-2 px-4 rounded-full w-xs focus:outline-none focus:border-[#CCCCCC] focus:text-[#CCCCCC]"
             value={formData.playlistUrl}
             onChange={handleChange}
             required
           />
 
-          <div className="p-1 rounded-full bg-linear-to-r from-[#40BF40] to-[#7266CC]">
-            <button
-              type="submit"
-              disabled={isLoading}
-              onClick={handleSubmit}
-              className="text-xl font-medium w-30 bg-neutral-800/50 hover:bg-neutral-500/30 p-2 rounded-full shadow-lg"
-            >
-              {isLoading ? "Transferring..." : "Transfer"}
-            </button>
-          </div>
+          <button
+            type="submit"
+            disabled={isLoading}
+            onClick={handleSubmit}
+            className="text-xl font-medium w-30 p-2 rounded-full bg-linear-to-r from-[#40BF40] to-[#7266CC]"
+          >
+            Transfer
+          </button>
 
           {transferResult && (
             <div className="mt-4 p-2 bg-green-200 text-green-800 rounded">
