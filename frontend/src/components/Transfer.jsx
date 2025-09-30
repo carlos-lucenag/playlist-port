@@ -26,7 +26,7 @@ function Transfer() {
   const transferToYoutube = async (playlistId) => {
     try {
       const response = await fetch(
-        `http://localhost:3000/transferToYoutube/${playlistId}`,
+        `http://localhost:3000/transfer/youtube/${playlistId}`,
         {
           method: "POST",
           headers: {
@@ -58,7 +58,7 @@ function Transfer() {
   const transferToSpotify = async (playlistId) => {
     try {
       const response = await fetch(
-        `http://localhost:3000/transferToSpotify/${playlistId}`,
+        `http://localhost:3000/transfer/spotify/${playlistId}`,
         {
           method: "POST",
           headers: {
@@ -193,15 +193,15 @@ function Transfer() {
           </button>
 
           {transferResult && (
-            <div className="mt-4 p-2 bg-green-200 text-green-800 rounded">
-              <p>Success! Your new playlist is here:</p>
+            <div className="mt-4 text-center p-2 bg-green-200 text-green-800 rounded">
+              <p>Success!</p>
               <a
                 href={transferResult.url}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="font-bold underline"
               >
-                {transferResult.url}
+                Go to playlist
               </a>
             </div>
           )}
