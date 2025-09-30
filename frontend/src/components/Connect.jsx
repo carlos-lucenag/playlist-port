@@ -104,38 +104,32 @@ function Connect() {
 
   return (
     <div>
-      <div className="bg-neutral-900 h-[22rem] w-[26rem] rounded-4xl flex flex-col items-center justify-evenly text-neutral-100 shadow-lg xs:mb-28">
+      <div className="mt-16 bg-[#0D0D0D] h-[24rem] w-[32rem] rounded-[6rem] flex flex-col items-center justify-evenly text-[#E6E6E6]">
         <p className="text-4xl font-medium text-center">
           Connect your<br></br>accounts
         </p>
-        <div className="grid gap-5">
+        <div className="grid gap-5 text-2xl text-[#808080]">
           <button
-            className={`px-4 py-2 rounded-full text-xl focus:outline-none transition-shadow ${
+            className={`w-32 h-12 rounded-full border-2 border-[#808080] hover:text-[#CCCCCC] hover:border-[#CCCCCC] focus:outline-none transition-shadow ${
               isConnectedSpotify
-                ? "ring-4 ring-green-400 ring-opacity-60"
-                : "bg-neutral-800 hover:bg-neutral-700"
+                ? "ring-2 ring-[#33CC33] ring-opacity-60"
+                : "bg-neutral-800"
             }`}
             onClick={handleConnectSpotify}
           >
             Spotify
           </button>
           <button
-            className={`px-4 py-2 rounded-full text-xl focus:outline-none transition-shadow ${
+            className={`w-32 h-12 rounded-full border-2 border-[#808080] hover:text-[#CCCCCC] hover:border-[#CCCCCC] focus:outline-none transition-shadow ${
               isConnectedYoutube
-                ? "ring-4 ring-green-400 ring-opacity-60"
-                : "bg-neutral-800 hover:bg-neutral-700"
+                ? "ring-2 ring-[#33CC33] ring-opacity-60"
+                : "bg-neutral-800"
             }`}
             onClick={handleConnectYoutube}
           >
             Youtube
           </button>
         </div>
-
-        {isChecking && (
-          <p className="text-sm text-neutral-300 mt-2">
-            Checking connections...
-          </p>
-        )}
 
         {error && <p className="text-red-400 mt-2">{error}</p>}
       </div>
