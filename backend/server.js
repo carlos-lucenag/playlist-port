@@ -314,6 +314,27 @@ const isConnected = (req) => {
   return req.session.spotify_access_token && req.session.youtube_access_token;
 };
 
+const cleanTrackData = (title, artist) => {
+  // Remove "- Topic"
+  artist = artist.replace(/\s*-\s*Topic$/i, "");
+
+  // Remove apóstrofos ex: "don't" -> "dont"
+  title = title.replace(/'/g, "");
+
+  // Remove coisas entre parênteses ex: (UK Edit), (slowed & reverb), (feat. X)
+  title = title.replace(/\([^)]*\)/g, "").trim();
+
+  // Remove múltiplos espaços
+  title = title.replace(/\s+/g, " ");
+  artist = artist.replace(/\s+/g, " ");
+
+  // Normaliza para lowercase
+  title = title.toLowerCase();
+  artist = artist.toLowerCase();
+
+  return { title, artist };
+};
+
 // Transfer to Spotify
 app.post("/transfer/spotify/:id", async (req, res) => {
   if (!isConnected(req))
@@ -362,6 +383,7 @@ app.post("/transfer/spotify/:id", async (req, res) => {
     const response = await youtube.playlistItems.list({
       part: ["snippet,contentDetails"],
       playlistId: playlistId,
+      maxResults: 10,
     });
     const items = response.data.items;
     trackTitles = getYoutubeTitles(items);
@@ -398,16 +420,17 @@ app.post("/transfer/spotify/:id", async (req, res) => {
   // Recuperar URIs das faixas no spotify
   let uriArray = [];
   for (const track of trackTitles) {
-    const { title: cleanTitle, artist: cleanArtist } = cleanTrackData(
-      track.title,
-      track.artist
-    );
+    const cleanData = cleanTrackData(track.title, track.artist);
+
+    const cleanTitle = cleanData.title;
+    const cleanArtist = cleanData.artist;
+
     console.log(`titulo: ${cleanTitle}, artista: ${cleanArtist}`);
 
     try {
       const response = await axios.get("https://api.spotify.com/v1/search", {
         params: {
-          q: `${cleanTitle} ${cleanArtist}`,
+          q: `track:${cleanTitle} ${cleanArtist}`,
           type: "track",
           limit: 1,
         },
@@ -419,11 +442,13 @@ app.post("/transfer/spotify/:id", async (req, res) => {
 
       const trackUri = response.data.tracks.items[0]?.uri;
       if (trackUri) {
+        console.log("Track Name: ", response.data.tracks.items[0].name);
+        console.log("Track Album: ", response.data.tracks.items[0].album.name);
         uriArray.push(trackUri);
       }
     } catch (err) {
       console.error(
-        "Erro ao recuperar URI da faixa:",
+        "Error getting track URI:",
         track,
         err.response?.data || err.message
       );
@@ -453,20 +478,6 @@ app.post("/transfer/spotify/:id", async (req, res) => {
     res.status(400).send({ message: "Erro ao adicionar faixas a playlist" });
   }
 });
-
-const cleanTrackData = (title, artist) => {
-  // Remove "- Topic"
-  artist = artist.replace(/\s*-\s*Topic$/i, "");
-
-  // Remove coisas entre parênteses ex: ( UK Edit), (slowed & reverb)
-  title = title.replace(/\([^)]*\)/g, "").trim();
-
-  // Remove múltiplos espaços
-  title = title.replace(/\s+/g, " ");
-  artist = artist.replace(/\s+/g, " ");
-
-  return { title, artist };
-};
 
 const getYoutubeTitles = (items) => {
   let titlesArray = [];
