@@ -3,8 +3,6 @@ import { useState, useEffect, useCallback } from "react";
 function Connect() {
   const [isConnectedSpotify, setIsConnectedSpotify] = useState(null);
   const [isConnectedYoutube, setIsConnectedYoutube] = useState(null);
-  const [isChecking, setIsChecking] = useState(false);
-  const [error, setError] = useState(null);
 
   const checkSpotifyConnection = useCallback(async () => {
     try {
@@ -63,75 +61,37 @@ function Connect() {
   const handleConnectYoutube = () => {
     window.location.href = "http://localhost:3000/login/youtube";
   };
-
-  const checkConnections = useCallback(async () => {
-    setIsChecking(true);
-    setError(null);
-    try {
-      const [spotify, youtube] = await Promise.all([
-        checkSpotifyConnection(),
-        checkYoutubeConnection(),
-      ]);
-      setIsConnectedSpotify(spotify);
-      setIsConnectedYoutube(youtube);
-
-      if (isConnectedSpotify === true && isConnectedYoutube === true)
-        window.location.href = "http://localhost:5173/transfer";
-    } catch (err) {
-      console.error("checkConnections error", err);
-      setError("Failed to check connections");
-    } finally {
-      setIsChecking(false);
-    }
-  }, [
-    checkSpotifyConnection,
-    checkYoutubeConnection,
-    isConnectedSpotify,
-    isConnectedYoutube,
-  ]);
-
-  useEffect(() => {
-    (async () => {
-      await checkConnections();
-    })();
-
-    const onFocus = async () => {
-      await checkConnections();
-    };
-    window.addEventListener("focus", onFocus);
-    return () => window.removeEventListener("focus", onFocus);
-  }, [checkConnections]);
-
+  
   return (
     <div>
-      <div className="mt-16 bg-[#0D0D0D] h-[24rem] w-[32rem] rounded-[6rem] flex flex-col items-center justify-evenly text-[#E6E6E6]">
-        <p className="text-4xl font-medium text-center">
-          Connect your<br></br>accounts
-        </p>
-        <div className="grid gap-5 text-2xl text-[#808080]">
+      <div className="py-40 relative bottom-0 w-screen flex flex-col">
+        <div className="text-[#181C17] ml-[16%] w-fit">
+          <h1 className="text-6xl text-shadow-md font-bold tracking-wide mb-5">
+            1. Connect
+          </h1>
+          <p className="text-3xl italic text-shadow-xs text-[#636B61]">
+            To your accounts
+          </p>
+        </div>
+
+        <div className="grid mt-36 gap-5 self-center text-3xl text-[#395D28]">
           <button
-            className={`w-32 h-12 rounded-full border-2 border-[#808080] hover:text-[#CCCCCC] hover:border-[#CCCCCC] focus:outline-none transition-shadow ${
-              isConnectedSpotify
-                ? "ring-2 ring-[#33CC33] ring-opacity-60"
-                : "bg-neutral-800"
-            }`}
-            onClick={handleConnectSpotify}
-          >
-            Spotify
-          </button>
-          <button
-            className={`w-32 h-12 rounded-full border-2 border-[#808080] hover:text-[#CCCCCC] hover:border-[#CCCCCC] focus:outline-none transition-shadow ${
-              isConnectedYoutube
-                ? "ring-2 ring-[#33CC33] ring-opacity-60"
-                : "bg-neutral-800"
+            className={`border-2 border-[#FAFAF9] bg-linear-to-r from-[#F0F6EE03] to-[#D9FBB6] w-48 px-4 py-2 rounded-full text-3xl self-center font-medium tracking-wide shadow-[inset_0_-2px_4px_rgba(0,0,0,0.1),inset_0_4px_8px_rgba(255,255,255,0.3),0_2px_4px_rgba(0,0,0,0.1)] transform transition-all duration-200 ease-in-out hover:-translate-y-0.5 ${
+              isConnectedYoutube ? " border-[#99F53D]" : "bg-[#F0F6EE]"
             }`}
             onClick={handleConnectYoutube}
           >
             Youtube
           </button>
+          <button
+            className={`border-2 border-[#FAFAF9] bg-linear-to-r from-[#F0F6EE03] to-[#D9FBB6] w-48 px-4 py-2 rounded-full text-3xl self-center font-medium tracking-wide shadow-[inset_0_-2px_4px_rgba(0,0,0,0.1),inset_0_4px_8px_rgba(255,255,255,0.3),0_2px_4px_rgba(0,0,0,0.1)] transform transition-all duration-200 ease-in-out hover:-translate-y-0.5 ${
+              isConnectedSpotify ? "border-[#99F53D]" : "bg-[#F0F6EE]"
+            }`}
+            onClick={handleConnectSpotify}
+          >
+            Spotify
+          </button>
         </div>
-
-        {error && <p className="text-red-400 mt-2">{error}</p>}
       </div>
     </div>
   );

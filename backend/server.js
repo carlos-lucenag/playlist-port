@@ -258,7 +258,7 @@ const createYoutubePlaylist = async (playlistName) => {
     return playlistResponse.data.id;
   } catch (err) {
     console.error("Error creating YouTube playlist:", err);
-    return res.status(500).send("Error creating YouTube playlist");
+    return "Error creating YouTube playlist";
   }
 };
 

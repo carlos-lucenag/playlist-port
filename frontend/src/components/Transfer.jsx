@@ -41,10 +41,11 @@ function Transfer() {
       if (response.status === 401) {
         const data = await response.json();
         window.location.href = data.redirectUrl;
-        return
+        return;
       }
 
-      if (!response.ok) throw new Error("Failed to transfer playlist, please try again.");
+      if (!response.ok)
+        throw new Error("Failed to transfer playlist, please try again.");
 
       const data = await response.json();
       setTransferResult(data);
@@ -69,7 +70,8 @@ function Transfer() {
         }
       );
 
-      if (!response.ok) throw new Error("Failed to transfer playlist, please try again.");
+      if (!response.ok)
+        throw new Error("Failed to transfer playlist, please try again.");
 
       const data = await response.json();
       setTransferResult(data);
@@ -105,15 +107,20 @@ function Transfer() {
   };
 
   return (
-    <div className="mt-16 w-6xl">
-      <form className="flex justify-between items-center">
-        <div className="bg-[#0D0D0D] h-[24rem] w-[32rem] rounded-[6rem] flex flex-col items-center justify-evenly text-[#E6E6E6]">
-          <p className="text-4xl font-medium text-center">
-            Select origin<br></br>and destination
+    <div>
+      <div className="py-40 relative bottom-0 w-screen flex flex-col">
+        <div className="text-[#181C17] ml-64 w-fit">
+          <h1 className="text-6xl text-shadow-md font-bold tracking-wide mb-5">
+            2. Select
+          </h1>
+          <p className="text-3xl italic text-shadow-xs text-[#636B61]">
+            Origin and destination
           </p>
-          <div className="w-xs p-2">
-            <div className="flex items-center justify-evenly mb-10">
-              <p className="text-2xl w-20 text-center">From</p>
+        </div>
+        <div className="flex flex-col">
+          <form className="border self-center w-80">
+            <div className="flex gap-10">
+              <p className="text-4xl font-medium">From:</p>
               <select
                 name="origin"
                 id="origin-service"
@@ -121,16 +128,14 @@ function Transfer() {
                 value={formData.origin}
                 onChange={handleChange}
                 className="
-                  appearance-none 
-                  cursor-pointer
-                  w-24 h-10 
-                  text-center text-xl 
-                  bg-neutral-800 text-[#808080] 
-                  rounded-full 
-                  border-2 border-[#808080] 
-                  hover:border-[#CCCCCC] hover:text-[#CCCCCC]
-                  focus:outline-none 
-                "
+              cursor-pointer
+              w-24 h-10 
+              text-center text-xl 
+              bg-neutral-200 text-[#000000] 
+              rounded-full 
+              border-2 border-[#808080] 
+              focus:outline-none 
+              "
               >
                 <option value="" disabled>
                   Select
@@ -139,25 +144,23 @@ function Transfer() {
                 <option value="youtube">Youtube</option>
               </select>
             </div>
-            <div className="flex items-center justify-evenly">
-              <p className="text-2xl w-20 text-center">To</p>
+            <div className="flex gap-10 border">
+              <p className="text-4xl font-medium">To:</p>
               <select
-                name="destination"
-                id="destination-service"
+                name="origin"
+                id="origin-service"
                 required
-                value={formData.destination}
+                value={formData.origin}
                 onChange={handleChange}
                 className="
-                  appearance-none 
-                  cursor-pointer
-                  w-24 h-10 
-                  text-center text-xl 
-                  bg-neutral-800 text-[#808080] 
-                  rounded-full 
-                  border-2 border-[#808080] 
-                  hover:border-[#CCCCCC] hover:text-[#CCCCCC]
-                  focus:outline-none 
-                "
+              cursor-pointer
+              w-24 h-10 
+              text-center text-xl 
+              bg-neutral-200 text-[#000000] 
+              rounded-full 
+              border-2 border-[#808080] 
+              focus:outline-none 
+              "
               >
                 <option value="" disabled>
                   Select
@@ -166,52 +169,9 @@ function Transfer() {
                 <option value="youtube">Youtube</option>
               </select>
             </div>
-          </div>
+          </form>
         </div>
-
-        <div className="bg-[#0D0D0D] h-[24rem] w-[32rem] rounded-[6rem] flex flex-col items-center justify-evenly text-[#E6E6E6]">
-          <p className="text-4xl font-medium text-center w-xs">
-            Paste your<br></br>playlist URL
-          </p>
-          <input
-            type="text"
-            name="playlistUrl"
-            placeholder="Paste your playlist's URL"
-            className="appearance-none bg-neutral-800 border-2 border-[#808080] text-[#808080] text-sm py-2 px-4 rounded-full w-xs focus:outline-none focus:border-[#CCCCCC] focus:text-[#CCCCCC]"
-            value={formData.playlistUrl}
-            onChange={handleChange}
-            required
-          />
-
-          <button
-            type="submit"
-            disabled={isLoading}
-            onClick={handleSubmit}
-            className="text-xl font-medium w-30 p-2 rounded-full bg-linear-to-r from-[#40BF40] to-[#7266CC]"
-          >
-            Transfer
-          </button>
-
-          {transferResult && (
-            <div className="mt-4 text-center p-2 bg-green-200 text-green-800 rounded">
-              <p>Success!</p>
-              <a
-                href={transferResult.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-bold underline"
-              >
-                Go to playlist
-              </a>
-            </div>
-          )}
-          {error && (
-            <div className="mt-4 p-2 bg-red-200 text-red-800 rounded">
-              <p>Error: {error}</p>
-            </div>
-          )}
-        </div>
-      </form>
+      </div>
     </div>
   );
 }
