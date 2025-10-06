@@ -63,7 +63,7 @@ function Connect() {
   };
 
   return (
-    <div className="mt-60 flex flex-col">
+    <div className="mt-40 flex flex-col">
       <h1 className="text-6xl text-[#181C17] text-shadow-md font-bold tracking-wide">
         1. Connect
       </h1>

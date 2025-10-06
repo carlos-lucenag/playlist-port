@@ -17,7 +17,7 @@ function App() {
   return (
     <div className="max-w-[60rem] flex flex-col">
       <div className="flex flex-col h-dvh">
-        <div id="navbar" className="mt-30">
+        <div id="navbar" className="mt-40">
           <h1 className="text-[#181C17] text-8xl text-shadow-lg font-bold tracking-wide">
             Playlist Port
           </h1>
@@ -32,12 +32,12 @@ function App() {
             border-2 border-[#FAFAF9] 
             text-[#395D28] text-5xl font-medium tracking-wide
             bg-linear-to-r from-[#F0F6EE] to-[#99F53D] 
-            w-fit 
-            self-center
-            mt-[30vh]
-            px-10 py-3 
             rounded-full 
             shadow-[inset_0_-2px_4px_rgba(0,0,0,0.25),inset_0_4px_8px_rgba(255,255,255,0.3),0_2px_8px_rgba(0,0,0,0.20)] 
+            w-fit 
+            self-center
+            mt-[25vh]
+            px-10 py-3 
             transform transition-all duration-200 ease-in-out 
             hover:-translate-y-0.5"
         >
@@ -73,7 +73,7 @@ function App() {
         <Connect />
       </section>
 
-      <section className="border h-dvh" ref={transferPageRef}>
+      <section className="h-dvh" ref={transferPageRef}>
         <Transfer />
       </section>
     </div>

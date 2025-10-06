@@ -107,71 +107,71 @@ function Transfer() {
   };
 
   return (
-    <div>
-      <div className="py-40 relative bottom-0 w-screen flex flex-col">
-        <div className="text-[#181C17] ml-64 w-fit">
-          <h1 className="text-6xl text-shadow-md font-bold tracking-wide mb-5">
-            2. Select
-          </h1>
-          <p className="text-3xl italic text-shadow-xs text-[#636B61]">
-            Origin and destination
-          </p>
-        </div>
-        <div className="flex flex-col">
-          <form className="border self-center w-80">
-            <div className="flex gap-10">
-              <p className="text-4xl font-medium">From:</p>
-              <select
-                name="origin"
-                id="origin-service"
-                required
-                value={formData.origin}
-                onChange={handleChange}
-                className="
-              cursor-pointer
-              w-24 h-10 
-              text-center text-xl 
-              bg-neutral-200 text-[#000000] 
+    <div className="mt-40 flex flex-col">
+      <h1 className="text-6xl text-[#181C17] text-shadow-md font-bold tracking-wide">
+        2. Select
+      </h1>
+      <p className="mt-5 text-3xl text-[#636B61] italic">
+        Origin and destination
+      </p>
+
+      <form className="mt-[20vh] grid gap-10 self-center">
+        <div className="flex gap-7 items-center">
+          <p className="text-4xl font-medium w-30 text-right">From:</p>
+          <select
+            name="origin"
+            id="origin-service"
+            required
+            value={formData.origin}
+            onChange={handleChange}
+            className="
+              border-2 border-[#FAFAF9] 
+              text-[#395D28] font-medium tracking-wide
+              bg-linear-to-r from-[#F0F6EE03] to-[#D9FBB6] 
               rounded-full 
-              border-2 border-[#808080] 
-              focus:outline-none 
-              "
-              >
-                <option value="" disabled>
-                  Select
-                </option>
-                <option value="spotify">Spotify</option>
-                <option value="youtube">Youtube</option>
-              </select>
-            </div>
-            <div className="flex gap-10 border">
-              <p className="text-4xl font-medium">To:</p>
-              <select
-                name="origin"
-                id="origin-service"
-                required
-                value={formData.origin}
-                onChange={handleChange}
-                className="
+              shadow-[inset_0_-2px_4px_rgba(0,0,0,0.1),inset_0_4px_8px_rgba(255,255,255,0.3),0_2px_4px_rgba(0,0,0,0.1)] 
+              px-6 py-2
               cursor-pointer
-              w-24 h-10 
-              text-center text-xl 
-              bg-neutral-200 text-[#000000] 
-              rounded-full 
-              border-2 border-[#808080] 
+              text-center text-2xl 
               focus:outline-none 
-              "
-              >
-                <option value="" disabled>
-                  Select
-                </option>
-                <option value="spotify">Spotify</option>
-                <option value="youtube">Youtube</option>
-              </select>
-            </div>
-          </form>
+            "
+          >
+            <option value="" disabled>
+              Select
+            </option>
+            <option value="spotify">Spotify</option>
+            <option value="youtube">Youtube</option>
+          </select>
         </div>
-      </div>
+
+        <div className="flex gap-7 items-center">
+          <p className="text-4xl font-medium w-30 text-right">To:</p>
+          <select
+            name="destination"
+            id="destination-service"
+            required
+            value={formData.destination}
+            onChange={handleChange}
+            className="
+              border-2 border-[#FAFAF9] 
+              text-[#395D28] font-medium tracking-wide
+              bg-linear-to-r from-[#F0F6EE03] to-[#D9FBB6] 
+              rounded-full 
+              shadow-[inset_0_-2px_4px_rgba(0,0,0,0.1),inset_0_4px_8px_rgba(255,255,255,0.3),0_2px_4px_rgba(0,0,0,0.1)] 
+              px-6 py-2
+              cursor-pointer
+              text-center text-2xl 
+              focus:outline-none 
+            "
+          >
+            <option value="" disabled>
+              Select
+            </option>
+            <option value="spotify">Spotify</option>
+            <option value="youtube">Youtube</option>
+          </select>
+        </div>
+      </form>
     </div>
   );
 }

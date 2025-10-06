@@ -5,3 +5,9 @@
 button {
     cursor: pointer;
 }
+
+::picker-icon {
+    padding-right: 12px;
+    color: red;
+    background-color: red;
+}
