@@ -180,6 +180,275 @@ app.get("/callback/youtube", async (req, res) => {
   }
 });
 
+const getSpotifyInfo = async (playlistId, req) => {
+  try {
+    const response = await axios.get(
+      `https://api.spotify.com/v1/playlists/${playlistId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${req.session.spotify_access_token}`,
+        },
+      }
+    );
+    const result = response.data;
+    const playlistName = result.name;
+    const items = result.tracks.items;
+    let spotifyTracks = [];
+    for (const item of items) spotifyTracks.push(item.track.external_ids.isrc);
+    return { playlistName: playlistName, tracks: spotifyTracks };
+  } catch (err) {
+    console.error("Error while getting Spotify info:", err);
+    throw err;
+  }
+};
+
+// Rota genérica de transferência - suporta todas as combinações
+app.post("/transfer", async (req, res) => {
+  const { origin, destination, playlistId } = req.body;
+
+  // Validações
+  if (!playlistId) {
+    return res
+      .status(400)
+      .json({ message: "A valid playlist ID is required." });
+  }
+
+  if (!origin || !destination) {
+    return res
+      .status(400)
+      .json({ message: "Origin and destination are required." });
+  }
+
+  // Verifica autenticação necessária
+  if (
+    (origin === "spotify" || destination === "spotify") &&
+    !req.session.spotify_access_token
+  ) {
+    return res
+      .status(401)
+      .json({ message: "Authentication with Spotify is required." });
+  }
+
+  if (
+    (origin === "youtube" || destination === "youtube") &&
+    !req.session.youtube_access_token
+  ) {
+    return res
+      .status(401)
+      .json({ message: "Authentication with Youtube is required." });
+  }
+
+  try {
+    // Spotify -> Youtube
+    if (origin === "spotify" && destination === "youtube") {
+      oauth2Client.setCredentials({
+        access_token: req.session.youtube_access_token,
+        refresh_token: req.session.youtube_refresh_token,
+      });
+
+      const spotifyInfo = await getSpotifyInfo(playlistId, req);
+      const youtubePlaylistId = await createYoutubePlaylist(
+        spotifyInfo.playlistName
+      );
+      const addTracks = await addTracksToYoutubeIsrc(
+        spotifyInfo.tracks,
+        youtubePlaylistId
+      );
+
+      return res.status(200).json({
+        url: `https://www.youtube.com/playlist?list=${addTracks.youtubePlaylistId}`,
+        ...addTracks,
+      });
+    }
+
+    // Youtube -> Spotify
+    if (origin === "youtube" && destination === "spotify") {
+      oauth2Client.setCredentials({
+        access_token: req.session.youtube_access_token,
+        refresh_token: req.session.youtube_refresh_token,
+      });
+
+      // Recupera user ID do Spotify
+      const userResponse = await axios.get("https://api.spotify.com/v1/me", {
+        headers: {
+          Authorization: `Bearer ${req.session.spotify_access_token}`,
+        },
+      });
+      const spotifyUserId = userResponse.data.id;
+
+      // Recupera playlist do Youtube
+      const playlistResponse = await youtube.playlists.list({
+        part: ["snippet,contentDetails"],
+        id: playlistId,
+      });
+      const playlistName = playlistResponse.data.items[0].snippet.title;
+
+      const itemsResponse = await youtube.playlistItems.list({
+        part: ["snippet,contentDetails"],
+        playlistId: playlistId,
+        maxResults: 50,
+      });
+      const trackTitles = getYoutubeTitles(itemsResponse.data.items);
+
+      // Cria playlist no Spotify
+      const newPlaylistResponse = await axios.post(
+        `https://api.spotify.com/v1/users/${spotifyUserId}/playlists`,
+        {
+          name: playlistName,
+          description: "Playlist transferred by PlaylistPort.",
+          public: true,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${req.session.spotify_access_token}`,
+          },
+        }
+      );
+      const newPlaylistId = newPlaylistResponse.data.id;
+      const newPlaylistUrl = newPlaylistResponse.data.external_urls.spotify;
+
+      // Busca URIs das tracks
+      let uriArray = [];
+      for (const track of trackTitles) {
+        const cleanData = cleanTrackData(track.title, track.artist);
+        try {
+          const searchResponse = await axios.get(
+            "https://api.spotify.com/v1/search",
+            {
+              params: {
+                q: `track:${cleanData.title} ${cleanData.artist}`,
+                type: "track",
+                limit: 1,
+              },
+              headers: {
+                Authorization: `Bearer ${req.session.spotify_access_token}`,
+              },
+            }
+          );
+          const trackUri = searchResponse.data.tracks.items[0]?.uri;
+          if (trackUri) uriArray.push(trackUri);
+        } catch (err) {
+          console.error("Error getting track URI:", err.message);
+        }
+      }
+
+      // Adiciona tracks
+      await axios.post(
+        `https://api.spotify.com/v1/playlists/${newPlaylistId}/tracks`,
+        { uris: uriArray },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${req.session.spotify_access_token}`,
+          },
+        }
+      );
+
+      return res
+        .status(200)
+        .json({ url: newPlaylistUrl, tracksAdded: uriArray.length });
+    }
+
+    // Youtube -> Youtube
+    if (origin === "youtube" && destination === "youtube") {
+      oauth2Client.setCredentials({
+        access_token: req.session.youtube_access_token,
+        refresh_token: req.session.youtube_refresh_token,
+      });
+
+      const playlistResponse = await youtube.playlists.list({
+        part: ["snippet,contentDetails"],
+        id: playlistId,
+      });
+      const playlistName =
+        playlistResponse.data.items[0].snippet.title + " (Copy)";
+
+      const itemsResponse = await youtube.playlistItems.list({
+        part: ["snippet,contentDetails"],
+        playlistId: playlistId,
+        maxResults: 50,
+      });
+      const trackTitles = getYoutubeTitles(itemsResponse.data.items);
+
+      const youtubePlaylistId = await createYoutubePlaylist(playlistName);
+      const addTracks = await addTracksToYoutubeTitle(
+        trackTitles,
+        youtubePlaylistId
+      );
+
+      return res.status(200).json({
+        url: `https://www.youtube.com/playlist?list=${addTracks.youtubePlaylistId}`,
+        ...addTracks,
+      });
+    }
+
+    // Spotify -> Spotify
+    if (origin === "spotify" && destination === "spotify") {
+      const userResponse = await axios.get("https://api.spotify.com/v1/me", {
+        headers: {
+          Authorization: `Bearer ${req.session.spotify_access_token}`,
+        },
+      });
+      const spotifyUserId = userResponse.data.id;
+
+      const playlistResponse = await axios.get(
+        `https://api.spotify.com/v1/playlists/${playlistId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${req.session.spotify_access_token}`,
+          },
+        }
+      );
+      const playlistName = playlistResponse.data.name + " (Copy)";
+      const tracks = playlistResponse.data.tracks.items.map(
+        (item) => item.track.uri
+      );
+
+      const newPlaylistResponse = await axios.post(
+        `https://api.spotify.com/v1/users/${spotifyUserId}/playlists`,
+        {
+          name: playlistName,
+          description: "Playlist transferred by PlaylistPort.",
+          public: true,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${req.session.spotify_access_token}`,
+          },
+        }
+      );
+      const newPlaylistId = newPlaylistResponse.data.id;
+      const newPlaylistUrl = newPlaylistResponse.data.external_urls.spotify;
+
+      await axios.post(
+        `https://api.spotify.com/v1/playlists/${newPlaylistId}/tracks`,
+        { uris: tracks },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${req.session.spotify_access_token}`,
+          },
+        }
+      );
+
+      return res
+        .status(200)
+        .json({ url: newPlaylistUrl, tracksAdded: tracks.length });
+    }
+
+    return res
+      .status(400)
+      .json({ message: "Invalid origin/destination combination." });
+  } catch (err) {
+    console.error("Transfer error:", err.response?.data || err.message);
+    return res
+      .status(500)
+      .json({ message: "Failed to transfer playlist.", error: err.message });
+  }
+});
+
 // Transfer to Youtube
 app.post("/transfer/youtube/:id", async (req, res) => {
   if (!req.session.spotify_access_token) {
@@ -233,10 +502,7 @@ app.post("/transfer/youtube/:id", async (req, res) => {
   });
 
   const youtubePlaylistId = await createYoutubePlaylist(playlistName);
-  const addTracks = await addTracksToYoutubePlaylist(
-    trackIds,
-    youtubePlaylistId
-  );
+  const addTracks = addTracksToYoutubeIsrc(trackIds, youtubePlaylistId);
 
   if (!addTracks.youtubePlaylistId) {
     res.status(500).send("Could not transfer.");
@@ -253,16 +519,6 @@ app.post("/transfer/youtube/:id", async (req, res) => {
 
 const youtube = google.youtube({ version: "v3", auth: oauth2Client });
 
-const getSpotifyISRCs = (items) => {
-  let isrcArray = [];
-
-  for (const item of items) {
-    isrcArray.push(item.track.external_ids.isrc);
-  }
-
-  return isrcArray;
-};
-
 const createYoutubePlaylist = async (playlistName) => {
   try {
     const playlistResponse = await youtube.playlists.insert({
@@ -278,7 +534,7 @@ const createYoutubePlaylist = async (playlistName) => {
   }
 };
 
-const addTracksToYoutubePlaylist = async (isrcArray, youtubePlaylistId) => {
+const addTracksToYoutubeIsrc = async (isrcArray, youtubePlaylistId) => {
   let addedTracks = [];
   for (const isrc of isrcArray) {
     try {
@@ -313,14 +569,75 @@ const addTracksToYoutubePlaylist = async (isrcArray, youtubePlaylistId) => {
         console.log(`No video found for ISRC ${isrc}`);
       }
     } catch (err) {
-      console.error(`Error adding ISRC ${isrc} to playlist:`, err);
+      console.error(`Error adding ISRC ${isrc} to playlist:`, err.message);
     }
   }
 
   const result = {
     youtubePlaylistId,
     addedTracks,
-    message: "Transfer completed",
+  };
+
+  return result;
+};
+
+const addTracksToYoutubeTitle = async (titleArray, youtubePlaylistId) => {
+  let addedTracks = [];
+  for (const title of titleArray) {
+    try {
+      // Monta a query de busca com título e artista
+      const searchQuery =
+        typeof title === "object"
+          ? `${title.title} ${title.artist}`.trim()
+          : title;
+
+      const searchResponse = await youtube.search.list({
+        part: "snippet",
+        q: searchQuery,
+        maxResults: 1,
+        type: "video",
+        videoCategoryId: "10", // Categoria de música
+      });
+
+      const items = searchResponse.data.items;
+      if (items && items.length > 0) {
+        const videoId = items[0].id.videoId;
+
+        // Adiciona vídeo à playlist
+        await youtube.playlistItems.insert({
+          part: "snippet",
+          requestBody: {
+            snippet: {
+              playlistId: youtubePlaylistId,
+              resourceId: {
+                kind: "youtube#video",
+                videoId: videoId,
+              },
+            },
+          },
+        });
+
+        addedTracks.push({
+          title: typeof title === "object" ? title.title : title,
+          videoId,
+        });
+        console.log(`Added video ${videoId} for ${searchQuery}`);
+      } else {
+        console.log(`No video found for ${searchQuery}`);
+      }
+    } catch (err) {
+      console.error(
+        `Error adding ${
+          typeof title === "object" ? title.title : title
+        } to playlist:`,
+        err.message
+      );
+    }
+  }
+
+  const result = {
+    youtubePlaylistId,
+    addedTracks,
   };
 
   return result;

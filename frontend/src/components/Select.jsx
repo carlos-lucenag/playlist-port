@@ -1,109 +1,17 @@
-import { useState } from "react";
-
-function Select() {
-  const [formData, setFormData] = useState({
-    origin: "",
-    destination: "",
-    playlistUrl: "",
-  });
-
-  const [isLoading, setIsLoading] = useState(false);
-  const [transferResult, setTransferResult] = useState(null);
-  const [error, setError] = useState(null);
-
-  const extractPlaylistId = (playlistUrl) => {
-    let playlistId = "";
-    switch (formData.origin) {
-      case "spotify":
-        playlistId = playlistUrl.slice(-22);
-        break;
-      case "youtube":
-        playlistId = playlistUrl.slice(-34);
-    }
-    return playlistId;
-  };
-
-  const transferToYoutube = async (playlistId) => {
-    try {
-      const response = await fetch(
-        `http://localhost:3000/transfer/youtube/${playlistId}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ playlistId }),
-          credentials: "include",
-        }
-      );
-
-      // Se não estiver autenticado.
-      if (response.status === 401) {
-        const data = await response.json();
-        window.location.href = data.redirectUrl;
-        return;
-      }
-
-      if (!response.ok)
-        throw new Error("Failed to transfer playlist, please try again.");
-
-      const data = await response.json();
-      setTransferResult(data);
-    } catch (error) {
-      setError(error.message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const transferToSpotify = async (playlistId) => {
-    try {
-      const response = await fetch(
-        `http://localhost:3000/transfer/spotify/${playlistId}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ playlistId }),
-          credentials: "include",
-        }
-      );
-
-      if (!response.ok)
-        throw new Error("Failed to transfer playlist, please try again.");
-
-      const data = await response.json();
-      setTransferResult(data);
-    } catch (error) {
-      setError(error.message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
+function Select({ transferData, setTransferData, transferPageRef }) {
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prevState) => ({
+    setTransferData((prevState) => ({
       ...prevState,
       [name]: value,
     }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setTransferResult(null);
-    setError(null);
-
-    let playlistUrl = formData.playlistUrl;
-    let playlistId = extractPlaylistId(playlistUrl);
-
-    if (formData.destination === "youtube") {
-      transferToYoutube(playlistId);
-    } else if (formData.destination === "spotify") {
-      transferToSpotify(playlistId);
-    }
+  const handleNext = () => {
+    transferPageRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
   };
 
   return (
@@ -122,7 +30,7 @@ function Select() {
             name="origin"
             id="origin-service"
             required
-            value={formData.origin}
+            value={transferData.origin}
             onChange={handleChange}
             className="
               border-2 border-[#FAFAF9] 
@@ -150,7 +58,7 @@ function Select() {
             name="destination"
             id="destination-service"
             required
-            value={formData.destination}
+            value={transferData.destination}
             onChange={handleChange}
             className="
               border-2 border-[#FAFAF9] 
@@ -172,6 +80,32 @@ function Select() {
           </select>
         </div>
       </form>
+
+      {transferData.origin && transferData.destination && (
+        <button
+          onClick={handleNext}
+          className="
+            w-fit h-12 
+            self-center 
+            mt-24 
+            shadow-md
+            bg-[#99F53D70] text-[#395D28] 
+            font-bold text-xl
+            rounded-full
+            px-8 py-2
+            transform transition-all duration-300 ease-out
+            hover:-translate-y-1
+            hover:shadow-lg
+            hover:bg-[#99F53D90]
+            animate-[slideUp_0.5s_ease-out]
+          "
+          style={{
+            animation: "slideUp 0.5s ease-out",
+          }}
+        >
+          Next →
+        </button>
+      )}
     </div>
   );
 }

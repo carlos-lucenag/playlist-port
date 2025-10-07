@@ -1,8 +1,15 @@
 import { useState } from "react";
 
-function Connect() {
+function Connect({ selectPageRef }) {
   const [isConnectedSpotify, setIsConnectedSpotify] = useState(false);
   const [isConnectedYoutube, setIsConnectedYoutube] = useState(false);
+
+  const handleNext = () => {
+    selectPageRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  };
 
   const handleConnectSpotify = async () => {
     const width = 500,
@@ -97,6 +104,32 @@ function Connect() {
           Spotify
         </button>
       </div>
+
+      {isConnectedSpotify && isConnectedYoutube && (
+        <button
+          onClick={handleNext}
+          className="
+            w-fit h-12 
+            self-center 
+            mt-24 
+            shadow-md
+            bg-[#99F53D70] text-[#395D28] 
+            font-bold text-xl
+            rounded-full
+            px-8 py-2
+            transform transition-all duration-300 ease-out
+            hover:-translate-y-1
+            hover:shadow-lg
+            hover:bg-[#99F53D90]
+            animate-[slideUp_0.5s_ease-out]
+          "
+          style={{
+            animation: "slideUp 0.5s ease-out",
+          }}
+        >
+          Next →
+        </button>
+      )}
     </div>
   );
 }

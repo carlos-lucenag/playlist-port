@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import Connect from "./components/Connect";
 import Select from "./components/Select";
 import Transfer from "./components/Transfer";
@@ -12,6 +12,13 @@ function App() {
   const selectPageRef = useRef(null);
   const transferPageRef = useRef(null);
 
+  // Estado compartilhado entre componentes
+  const [transferData, setTransferData] = useState({
+    origin: "",
+    destination: "",
+    playlistUrl: "",
+  });
+
   const handleScroll = () => {
     connectPageRef.current.scrollIntoView({
       behavior: "smooth",
@@ -20,7 +27,7 @@ function App() {
   };
 
   return (
-    <div className="max-w-[72vw] flex flex-col">
+    <div className="max-w-[56vw] flex flex-col">
       <div className="flex flex-col h-dvh">
         <div id="navbar" className="mt-[14vh]">
           <h1 className="text-[#181C17] text-8xl text-shadow-lg font-bold tracking-wide">
@@ -75,22 +82,29 @@ function App() {
             ry="10"
           />
         </svg>
-        <Connect />
+        <Connect selectPageRef={selectPageRef} />
       </section>
 
       <section className="h-dvh" ref={selectPageRef}>
-        <Select />
+        <Select 
+          transferData={transferData}
+          setTransferData={setTransferData}
+          transferPageRef={transferPageRef}
+        />
       </section>
 
       <section className="h-dvh" ref={transferPageRef}>
-        <Transfer />
+        <Transfer 
+          transferData={transferData}
+          setTransferData={setTransferData}
+        />
       </section>
 
-      <div className="bg-[#131612] rounded-t-[4rem] shadow-[0px_-8px_32px_rgba(19,22,18,0.4)] w-screen h-[calc(100vh/4)] px-[60rem] self-center flex items-center justify-between">
+      <div className="bg-[#131612] flex self-center rounded-t-[4rem] shadow-[0px_-8px_32px_rgba(19,22,18,0.4)] w-screen h-[calc(100vh/4)] justify-center gap-60 items-center">
         <p
           className="
-            text-3xl text-transparent 
-            font-medium
+            text-2xl text-transparent 
+            font-normal font-[DM_Mono]
             bg-clip-text bg-linear-to-r 
             from-[#99F53D50] to-[#99f53dcc] 
             hover:text-[#99f53d22]
