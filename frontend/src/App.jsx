@@ -20,9 +20,9 @@ function App() {
   };
 
   return (
-    <div className="max-w-[60rem] flex flex-col">
+    <div className="max-w-[72vw] flex flex-col">
       <div className="flex flex-col h-dvh">
-        <div id="navbar" className="mt-40">
+        <div id="navbar" className="mt-[14vh]">
           <h1 className="text-[#181C17] text-8xl text-shadow-lg font-bold tracking-wide">
             Playlist Port
           </h1>
@@ -93,23 +93,24 @@ function App() {
             font-medium
             bg-clip-text bg-linear-to-r 
             from-[#99F53D50] to-[#99f53dcc] 
-            text-shadow-[0px_0px_16px_rgba(153,245,61,0.2)]
+            hover:text-[#99f53d22]
+            text-shadow-[0px_0px_8px_rgba(153,245,61,0.2)]
           "
         >
           Made by @carloslucena
         </p>
         <div className="flex gap-2">
           <a href="https://github.com/carlos-lucenag" target="_blank">
-            <img src={githubIcon} alt="" srcset="" />
+            <img src={githubIcon} />
           </a>
           <a
             href="https://www.linkedin.com/in/carlosgoncalvesctt/"
             target="_blank"
           >
-            <img src={linkedinIcon} alt="" srcset="" />
+            <img src={linkedinIcon} />
           </a>
           <a href="mailto:carlosgoncalves.ctt@gmail.com">
-            <img src={gmailIcon} alt="" srcset="" />
+            <img src={gmailIcon} />
           </a>
         </div>
       </div>

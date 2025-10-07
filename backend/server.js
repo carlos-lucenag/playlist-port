@@ -87,7 +87,15 @@ app.get("/callback", async (req, res) => {
 
     req.session.spotify_access_token = access_token;
     req.session.spotify_refresh_token = refresh_token;
-    return res.status(200).send("Successfully connected to Spotify").end();
+    res.send(`
+      <script>
+        const data = ${JSON.stringify({
+          type: "spotify-auth",
+        })};
+        window.opener.postMessage(data, 'http://localhost:5173');
+      window.close();
+      </script>
+    `);
   } catch (err) {
     console.error(
       "Error while getting Spotify access_token:",
@@ -154,7 +162,15 @@ app.get("/callback/youtube", async (req, res) => {
 
     req.session.youtube_access_token = tokenResponse.data.access_token;
     req.session.youtube_refresh_token = tokenResponse.data.refresh_token;
-    return res.status(200).send("Successfully connected to Spotify");
+    res.send(`
+      <script>
+        const data = ${JSON.stringify({
+          type: "youtube-auth",
+        })};
+        window.opener.postMessage(data, 'http://localhost:5173');
+      window.close();
+      </script>
+    `);
   } catch (err) {
     console.error(
       "Error while connecting to Youtube",
