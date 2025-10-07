@@ -202,11 +202,9 @@ const getSpotifyInfo = async (playlistId, req) => {
   }
 };
 
-// Rota genérica de transferência - suporta todas as combinações
 app.post("/transfer", async (req, res) => {
   const { origin, destination, playlistId } = req.body;
 
-  // Validações
   if (!playlistId) {
     return res
       .status(400)
@@ -219,7 +217,6 @@ app.post("/transfer", async (req, res) => {
       .json({ message: "Origin and destination are required." });
   }
 
-  // Verifica autenticação necessária
   if (
     (origin === "spotify" || destination === "spotify") &&
     !req.session.spotify_access_token
@@ -449,74 +446,6 @@ app.post("/transfer", async (req, res) => {
   }
 });
 
-// Transfer to Youtube
-app.post("/transfer/youtube/:id", async (req, res) => {
-  if (!req.session.spotify_access_token) {
-    res
-      .status(401)
-      .json({
-        message: "Authentication with Spotify is required.",
-      })
-      .redirect("http://localhost:5173");
-    return;
-  }
-
-  if (!req.session.youtube_access_token) {
-    res
-      .status(401)
-      .json({
-        message: "Authentication with Youtube is required.",
-      })
-      .redirect("http://localhost:5173");
-    return;
-  }
-
-  const playlistId = req.params.id;
-
-  let trackIds; // The ISRC code of each track in the playlist
-  let playlistName;
-
-  try {
-    const response = await axios.get(
-      `https://api.spotify.com/v1/playlists/${playlistId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${req.session.spotify_access_token}`,
-        },
-      }
-    );
-
-    const result = response.data;
-    const items = result.tracks.items;
-
-    playlistName = result.name;
-    trackIds = getSpotifyISRCs(items);
-  } catch (err) {
-    console.error("Error while transfering to Youtube:", err);
-    res.status(500).send(`Error while transfering to Youtube: ${err}`);
-  }
-
-  oauth2Client.setCredentials({
-    access_token: req.session.youtube_access_token,
-    refresh_token: req.session.youtube_refresh_token,
-  });
-
-  const youtubePlaylistId = await createYoutubePlaylist(playlistName);
-  const addTracks = addTracksToYoutubeIsrc(trackIds, youtubePlaylistId);
-
-  if (!addTracks.youtubePlaylistId) {
-    res.status(500).send("Could not transfer.");
-    return "Could not transfer.";
-  }
-
-  const status = 200;
-
-  res.status(status).json({
-    url: `https://www.youtube.com/playlist?list=${addTracks.youtubePlaylistId}`,
-    ...addTracks,
-  });
-});
-
 const youtube = google.youtube({ version: "v3", auth: oauth2Client });
 
 const createYoutubePlaylist = async (playlistName) => {
@@ -643,10 +572,6 @@ const addTracksToYoutubeTitle = async (titleArray, youtubePlaylistId) => {
   return result;
 };
 
-const isConnected = (req) => {
-  return req.session.spotify_access_token && req.session.youtube_access_token;
-};
-
 const cleanTrackData = (title, artist) => {
   // Remove "- Topic"
   artist = artist.replace(/\s*-\s*Topic$/i, "");
@@ -668,150 +593,6 @@ const cleanTrackData = (title, artist) => {
   return { title, artist };
 };
 
-// Transfer to Spotify
-app.post("/transfer/spotify/:id", async (req, res) => {
-  if (!isConnected(req))
-    return res.status(400).send({ message: "User not connected." });
-
-  oauth2Client.setCredentials({
-    access_token: req.session.youtube_access_token,
-    refresh_token: req.session.youtube_refresh_token,
-  });
-
-  const playlistId = req.params.id;
-
-  let spotifyUserId = null;
-  let playlistName = null;
-  let trackTitles = null;
-  let newPlaylistId = null;
-  let newPlaylistUrl = null;
-
-  // Recupera o id do usuario no Spotify (necessario para criar a pl)
-  try {
-    const response = await axios.get("https://api.spotify.com/v1/me", {
-      headers: { Authorization: `Bearer ${req.session.spotify_access_token}` },
-    });
-    spotifyUserId = response.data.id;
-  } catch (err) {
-    console.error(
-      "Error fetching Spotify user id from Spotify API:",
-      err.response ? err.response.data : err.message
-    );
-  }
-
-  // Recupera titulo da playlist original no Youtube
-  try {
-    const response = await youtube.playlists.list({
-      part: ["snippet,contentDetails"],
-      id: playlistId,
-    });
-    playlistName = response.data.items[0].snippet.title;
-  } catch (err) {
-    console.error("Error getting playlist title:", err);
-    res.status(500).send("Error getting playlist title");
-  }
-
-  // Recupera os titulos das faixas da playlist no Youtube
-  try {
-    const response = await youtube.playlistItems.list({
-      part: ["snippet,contentDetails"],
-      playlistId: playlistId,
-      maxResults: 10,
-    });
-    const items = response.data.items;
-    trackTitles = getYoutubeTitles(items);
-  } catch (err) {
-    console.error("Error while transfering to Youtube:", err);
-    res.status(500).send("Error while transfering to Youtube");
-  }
-
-  // Criar playlist no Spotify
-  try {
-    const response = await axios.post(
-      `https://api.spotify.com/v1/users/${spotifyUserId}/playlists`,
-      {
-        name: playlistName,
-        description: "Playlist transferred by PlaylistPort.",
-        public: true,
-      },
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${req.session.spotify_access_token}`,
-        },
-      }
-    );
-    newPlaylistId = response.data.id;
-    newPlaylistUrl = response.data.external_urls.spotify;
-  } catch (err) {
-    console.error(
-      "Erro ao criar playlist no spotify:",
-      err.response ? err.response.data : err.message
-    );
-  }
-
-  // Recuperar URIs das faixas no spotify
-  let uriArray = [];
-  for (const track of trackTitles) {
-    const cleanData = cleanTrackData(track.title, track.artist);
-
-    const cleanTitle = cleanData.title;
-    const cleanArtist = cleanData.artist;
-
-    console.log(`titulo: ${cleanTitle}, artista: ${cleanArtist}`);
-
-    try {
-      const response = await axios.get("https://api.spotify.com/v1/search", {
-        params: {
-          q: `track:${cleanTitle} ${cleanArtist}`,
-          type: "track",
-          limit: 1,
-        },
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${req.session.spotify_access_token}`,
-        },
-      });
-
-      const trackUri = response.data.tracks.items[0]?.uri;
-      if (trackUri) {
-        console.log("Track Name: ", response.data.tracks.items[0].name);
-        console.log("Track Album: ", response.data.tracks.items[0].album.name);
-        uriArray.push(trackUri);
-      }
-    } catch (err) {
-      console.error(
-        "Error getting track URI:",
-        track,
-        err.response?.data || err.message
-      );
-    }
-  }
-
-  // Adicionar faixas na nova playlist
-  try {
-    const response = await axios.post(
-      `https://api.spotify.com/v1/playlists/${newPlaylistId}/tracks`,
-      {
-        uris: uriArray,
-      },
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${req.session.spotify_access_token}`,
-        },
-      }
-    );
-    if (response.data.snapshot_id) {
-      console.log("New playlist URL:", newPlaylistUrl);
-      res.status(200).send({ new_playlist_url: newPlaylistUrl });
-    }
-  } catch (error) {
-    console.error("Erro ao adicionar faixas a playlist:", error);
-    res.status(400).send({ message: "Erro ao adicionar faixas a playlist" });
-  }
-});
-
 const getYoutubeTitles = (items) => {
   let titlesArray = [];
   for (const item of items)
@@ -821,18 +602,6 @@ const getYoutubeTitles = (items) => {
     });
   return titlesArray;
 };
-
-app.get("/status/spotify", (req, res) => {
-  if (req.session.spotify_access_token)
-    res.status(200).send({ message: "Connected to Spotify." });
-  else res.status(400).send({ message: "Not connected to Spotify." });
-});
-
-app.get("/status/youtube", (req, res) => {
-  if (req.session.youtube_access_token)
-    res.status(200).send({ message: "Connected to Youtube." });
-  else res.status(400).send({ message: "Not connected to Youtube." });
-});
 
 app.listen(PORT, () => {
   console.log(`Running on http://localhost:${PORT}`);
