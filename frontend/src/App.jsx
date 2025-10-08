@@ -27,13 +27,13 @@ function App() {
   };
 
   return (
-    <div className="max-w-[56vw] flex flex-col">
+    <div className="max-w-[90vw] md:max-w-[70vw] lg:max-w-[56vw] flex flex-col px-4 md:px-0">
       <div className="flex flex-col h-dvh">
-        <div id="navbar" className="mt-[14vh]">
-          <h1 className="text-[#181C17] text-8xl text-shadow-lg font-bold tracking-wide">
+        <div id="navbar" className="mt-[10vh] md:mt-[14vh]">
+          <h1 className="text-[#181C17] text-4xl sm:text-5xl md:text-6xl lg:text-8xl text-shadow-lg font-bold tracking-wide">
             Playlist Port
           </h1>
-          <p className="text-[#636B61] mt-6 text-3xl font-medium">
+          <p className="text-[#636B61] mt-4 md:mt-6 text-lg sm:text-xl md:text-2xl lg:text-3xl font-medium">
             Transfer your playlists through streaming services.
           </p>
         </div>
@@ -42,14 +42,14 @@ function App() {
           onClick={handleScroll}
           className="
             border-2 border-[#FAFAF9] 
-            text-[#395D28] text-5xl font-medium tracking-wide
+            text-[#395D28] text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-medium tracking-wide
             bg-linear-to-r from-[#F0F6EE] to-[#99F53D] 
             rounded-full 
             shadow-[inset_0_-2px_4px_rgba(0,0,0,0.25),inset_0_4px_8px_rgba(255,255,255,0.3),0_2px_8px_rgba(0,0,0,0.20)] 
             w-fit 
             self-center
-            mt-[25vh]
-            px-10 py-3 
+            mt-[15vh] md:mt-[25vh]
+            px-6 py-2 sm:px-8 sm:py-2.5 md:px-10 md:py-3 
             transform transition-all duration-200 ease-in-out 
             hover:-translate-y-0.5"
         >
@@ -103,17 +103,18 @@ function App() {
       <div
         className="
         bg-[#131612] 
-        flex 
+        flex flex-col md:flex-row
         self-center 
-        rounded-t-[4rem] 
+        rounded-t-[2rem] md:rounded-t-[4rem] 
         shadow-[0px_-16px_32px_rgba(19,22,18,0.4)] 
-        w-screen h-[calc(100vh/4)] 
+        w-screen min-h-[25vh] md:h-[calc(100vh/4)] 
         justify-center items-center 
-        gap-60"
+        gap-6 md:gap-20 lg:gap-60
+        py-8 md:py-0"
       >
         <p
           className="
-            text-2xl text-transparent 
+            text-base sm:text-lg md:text-xl lg:text-2xl text-transparent 
             font-normal font-[DM_Mono]
             bg-clip-text bg-linear-to-r 
             from-[#99F53D50] to-[#99f53dcc] 
@@ -123,18 +124,18 @@ function App() {
         >
           Made by @carloslucena
         </p>
-        <div className="flex gap-2">
+        <div className="flex gap-2 md:gap-3">
           <a href="https://github.com/carlos-lucenag" target="_blank">
-            <img src={githubIcon} />
+            <img src={githubIcon} className="w-8 h-8 md:w-10 md:h-10" />
           </a>
           <a
             href="https://www.linkedin.com/in/carlosgoncalvesctt/"
             target="_blank"
           >
-            <img src={linkedinIcon} />
+            <img src={linkedinIcon} className="w-8 h-8 md:w-10 md:h-10" />
           </a>
           <a href="mailto:carlosgoncalves.ctt@gmail.com">
-            <img src={gmailIcon} />
+            <img src={gmailIcon} className="w-8 h-8 md:w-10 md:h-10" />
           </a>
         </div>
       </div>

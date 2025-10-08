@@ -72,11 +72,11 @@ function Transfer({ transferData, setTransferData }) {
   }
 
   return (
-    <div className="mt-[14vh] flex flex-col">
-      <h1 className="text-6xl text-[#181C17] text-shadow-md font-bold tracking-wide">
+    <div className="mt-[10vh] md:mt-[14vh] flex flex-col">
+      <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-[#181C17] text-shadow-md font-bold tracking-wide">
         3. Paste
       </h1>
-      <p className="mt-5 text-3xl text-[#636B61] italic">Your playlist URL</p>
+      <p className="mt-3 md:mt-5 text-xl sm:text-2xl md:text-3xl text-[#636B61] italic">Your playlist URL</p>
       <form className="flex flex-col" onSubmit={handleTransfer}>
         <input
           type="text"
@@ -87,10 +87,10 @@ function Transfer({ transferData, setTransferData }) {
           placeholder="https://..."
           required
           className="
-            mt-[16vh]
-            w-full h-14 
-            px-8 py-4
-            text-xl
+            mt-[10vh] md:mt-[16vh]
+            w-full h-12 md:h-14 
+            px-4 py-3 md:px-8 md:py-4
+            text-base md:text-xl
             rounded-full 
             bg-[#F0F6EE] 
             border-2 border-[#395D28]
@@ -103,14 +103,14 @@ function Transfer({ transferData, setTransferData }) {
           disabled={isLoading || !transferData.origin || !transferData.destination}
           className="
             border-2 border-[#FAFAF9] 
-            text-[#395D28] text-4xl font-medium tracking-wide
+            text-[#395D28] text-2xl sm:text-3xl md:text-4xl font-medium tracking-wide
             bg-linear-to-r from-[#F0F6EE] to-[#99F53D] 
             rounded-full 
             shadow-[inset_0_-2px_4px_rgba(0,0,0,0.25),inset_0_4px_8px_rgba(255,255,255,0.3),0_2px_8px_rgba(0,0,0,0.20)] 
             w-fit 
             self-center
-            mt-[14vh]
-            px-10 py-3 
+            mt-[10vh] md:mt-[14vh]
+            px-6 py-2 sm:px-8 sm:py-2.5 md:px-10 md:py-3 
             transform transition-all duration-200 ease-in-out 
             hover:-translate-y-0.5
             disabled:opacity-50 disabled:cursor-not-allowed"
@@ -119,12 +119,12 @@ function Transfer({ transferData, setTransferData }) {
         </button>
 
         {error && (
-          <p className="text-red-500 text-center mt-4">{error}</p>
+          <p className="text-red-500 text-sm md:text-base text-center mt-4">{error}</p>
         )}
         
         {transferResult && (
           <div className="text-center mt-4">
-            <p className="text-green-600 font-semibold mb-2">
+            <p className="text-green-600 font-semibold mb-2 text-sm md:text-base">
               Playlist transferred successfully!
             </p>
             {transferResult.url && (
@@ -132,7 +132,7 @@ function Transfer({ transferData, setTransferData }) {
                 href={transferResult.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[#395D28] underline hover:text-[#99f53d]"
+                className="text-[#395D28] underline hover:text-[#99f53d] text-sm md:text-base"
               >
                 Open new playlist
               </a>

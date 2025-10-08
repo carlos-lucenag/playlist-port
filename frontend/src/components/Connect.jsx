@@ -54,22 +54,22 @@ function Connect({ selectPageRef }) {
   };
 
   return (
-    <div className="mt-[14vh] flex flex-col">
-      <h1 className="text-6xl text-[#181C17] text-shadow-md font-bold tracking-wide">
+    <div className="mt-[10vh] md:mt-[14vh] flex flex-col">
+      <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-[#181C17] text-shadow-md font-bold tracking-wide">
         1. Connect
       </h1>
-      <p className="mt-5 text-3xl text-[#636B61] italic">To your accounts</p>
+      <p className="mt-3 md:mt-5 text-xl sm:text-2xl md:text-3xl text-[#636B61] italic">To your accounts</p>
 
-      <div className="grid mt-[20vh] gap-5 self-center text-3xl text-[#395D28]">
+      <div className="grid mt-[12vh] md:mt-[20vh] gap-4 md:gap-5 self-center text-[#395D28]">
         <button
           onClick={handleConnectYoutube}
           className={`
             border-2 border-[#FAFAF9] 
             bg-linear-to-r from-[#F0F6EE03] to-[#D9FBB6] 
-            w-48 
+            w-36 sm:w-40 md:w-48 
             px-4 py-2 
             rounded-full 
-            text-3xl font-medium tracking-wide 
+            text-xl sm:text-2xl md:text-3xl font-medium tracking-wide 
             self-center 
             shadow-[inset_0_-2px_4px_rgba(0,0,0,0.1),inset_0_4px_8px_rgba(255,255,255,0.3),0_2px_4px_rgba(0,0,0,0.1)] 
             transform transition-all duration-200 ease-in-out 
@@ -87,10 +87,10 @@ function Connect({ selectPageRef }) {
           className={`
             border-2 border-[#FAFAF9] 
             bg-linear-to-r from-[#F0F6EE03] to-[#D9FBB6] 
-            w-48 
+            w-36 sm:w-40 md:w-48 
             px-4 py-2 
             rounded-full 
-            text-3xl font-medium tracking-wide 
+            text-xl sm:text-2xl md:text-3xl font-medium tracking-wide 
             self-center 
             shadow-[inset_0_-2px_4px_rgba(0,0,0,0.1),inset_0_4px_8px_rgba(255,255,255,0.3),0_2px_4px_rgba(0,0,0,0.1)] 
             transform transition-all duration-200 ease-in-out 
@@ -109,14 +109,14 @@ function Connect({ selectPageRef }) {
         <button
           onClick={handleNext}
           className="
-            w-fit h-12 
+            w-fit h-10 md:h-12 
             self-center 
-            mt-24 
+            mt-16 md:mt-24 
             shadow-md
             bg-[#99F53D70] text-[#395D28] 
-            font-bold text-xl
+            font-bold text-lg md:text-xl
             rounded-full
-            px-8 py-2
+            px-6 py-2 md:px-8
             transform transition-all duration-300 ease-out
             hover:-translate-y-1
             hover:shadow-lg
