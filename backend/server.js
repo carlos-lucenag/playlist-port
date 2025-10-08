@@ -21,7 +21,7 @@ app.use(
 
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: "https://playlist-port-frontend.vercel.app/",
     credentials: true,
   })
 );
@@ -94,7 +94,7 @@ app.get("/callback", async (req, res) => {
         const data = ${JSON.stringify({
           type: "spotify-auth",
         })};
-        window.opener.postMessage(data, 'http://localhost:5173');
+        window.opener.postMessage(data, 'https://playlist-port-frontend.vercel.app/');
       window.close();
       </script>
     `);
@@ -169,7 +169,7 @@ app.get("/callback/youtube", async (req, res) => {
         const data = ${JSON.stringify({
           type: "youtube-auth",
         })};
-        window.opener.postMessage(data, 'http://localhost:5173');
+        window.opener.postMessage(data, 'https://playlist-port-frontend.vercel.app/');
       window.close();
       </script>
     `);
