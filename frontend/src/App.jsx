@@ -86,21 +86,31 @@ function App() {
       </section>
 
       <section className="h-dvh" ref={selectPageRef}>
-        <Select 
+        <Select
           transferData={transferData}
           setTransferData={setTransferData}
           transferPageRef={transferPageRef}
         />
       </section>
 
-      <section className="h-dvh" ref={transferPageRef}>
-        <Transfer 
+      <section className="h-[calc(dvh/3)] mb-24" ref={transferPageRef}>
+        <Transfer
           transferData={transferData}
           setTransferData={setTransferData}
         />
       </section>
 
-      <div className="bg-[#131612] flex self-center rounded-t-[4rem] shadow-[0px_-8px_32px_rgba(19,22,18,0.4)] w-screen h-[calc(100vh/4)] justify-center gap-60 items-center">
+      <div
+        className="
+        bg-[#131612] 
+        flex 
+        self-center 
+        rounded-t-[4rem] 
+        shadow-[0px_-16px_32px_rgba(19,22,18,0.4)] 
+        w-screen h-[calc(100vh/4)] 
+        justify-center items-center 
+        gap-60"
+      >
         <p
           className="
             text-2xl text-transparent 

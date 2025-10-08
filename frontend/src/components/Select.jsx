@@ -32,8 +32,7 @@ function Select({ transferData, setTransferData, transferPageRef }) {
             required
             value={transferData.origin}
             onChange={handleChange}
-            className="
-              border-2 border-[#FAFAF9] 
+            className={`border-2 border-[#FAFAF9] 
               text-[#395D28] font-medium tracking-wide
               bg-linear-to-r from-[#F0F6EE03] to-[#D9FBB6] 
               rounded-full 
@@ -42,7 +41,11 @@ function Select({ transferData, setTransferData, transferPageRef }) {
               cursor-pointer
               text-center text-2xl 
               focus:outline-none 
-            "
+              ${
+                transferData.origin !== ""
+                  ? "border-green-400"
+                  : "border-[#fafaf9]"
+              }`}
           >
             <option value="" disabled>
               Select
@@ -60,8 +63,7 @@ function Select({ transferData, setTransferData, transferPageRef }) {
             required
             value={transferData.destination}
             onChange={handleChange}
-            className="
-              border-2 border-[#FAFAF9] 
+            className={`border-2 border-[#FAFAF9] 
               text-[#395D28] font-medium tracking-wide
               bg-linear-to-r from-[#F0F6EE03] to-[#D9FBB6] 
               rounded-full 
@@ -70,7 +72,11 @@ function Select({ transferData, setTransferData, transferPageRef }) {
               cursor-pointer
               text-center text-2xl 
               focus:outline-none 
-            "
+              ${
+                transferData.destination !== ""
+                  ? "border-green-400"
+                  : "border-[#fafaf9]"
+              }`}
           >
             <option value="" disabled>
               Select

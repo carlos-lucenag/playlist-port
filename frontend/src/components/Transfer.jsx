@@ -72,7 +72,7 @@ function Transfer({ transferData, setTransferData }) {
   }
 
   return (
-    <div className="mt-40 flex flex-col">
+    <div className="mt-[14vh] flex flex-col">
       <h1 className="text-6xl text-[#181C17] text-shadow-md font-bold tracking-wide">
         3. Paste
       </h1>
@@ -87,7 +87,7 @@ function Transfer({ transferData, setTransferData }) {
           placeholder="https://..."
           required
           className="
-            mt-[20vh]
+            mt-[16vh]
             w-full h-14 
             px-8 py-4
             text-xl
@@ -109,7 +109,7 @@ function Transfer({ transferData, setTransferData }) {
             shadow-[inset_0_-2px_4px_rgba(0,0,0,0.25),inset_0_4px_8px_rgba(255,255,255,0.3),0_2px_8px_rgba(0,0,0,0.20)] 
             w-fit 
             self-center
-            mt-[16vh]
+            mt-[14vh]
             px-10 py-3 
             transform transition-all duration-200 ease-in-out 
             hover:-translate-y-0.5
