@@ -28,6 +28,8 @@ app.use(
 
 app.use(express.json());
 
+const TRANSFER_LIMIT = process.env.TRANSFER_LIMIT;
+
 // Spotify credentials and Authorization flow
 const S_CLIENT_ID = process.env.SPOTIFY_CLIENT_ID;
 const S_CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET;
@@ -194,7 +196,12 @@ const getSpotifyInfo = async (playlistId, req) => {
     const playlistName = result.name;
     const items = result.tracks.items;
     let spotifyTracks = [];
-    for (const item of items) spotifyTracks.push(item.track.external_ids.isrc);
+
+    for (let i = 0; i < TRANSFER_LIMIT; i++) {
+      const item = items[i];
+      spotifyTracks.push(item.track.external_ids.isrc);
+    }
+
     return { playlistName: playlistName, tracks: spotifyTracks };
   } catch (err) {
     console.error("Error while getting Spotify info:", err);
@@ -283,7 +290,7 @@ app.post("/transfer", async (req, res) => {
       const itemsResponse = await youtube.playlistItems.list({
         part: ["snippet,contentDetails"],
         playlistId: playlistId,
-        maxResults: 50,
+        maxResults: TRANSFER_LIMIT,
       });
       const trackTitles = getYoutubeTitles(itemsResponse.data.items);
 
