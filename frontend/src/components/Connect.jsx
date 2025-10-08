@@ -18,13 +18,13 @@ function Connect({ selectPageRef }) {
     const top = window.innerHeight / 2 - height / 2;
 
     const popup = window.open(
-      "http://localhost:3000/login/spotify",
+      "https://playlist-port-backend.onrender.com/login/spotify",
       "SpotifyLogin",
       `width=${width},height=${height},top=${top},left=${left}`
     );
 
     window.addEventListener("message", (e) => {
-      if (e.origin !== "http://localhost:3000") return;
+      if (e.origin !== "https://playlist-port-backend.onrender.com") return;
       if (e.data.type === "spotify-auth") {
         setIsConnectedSpotify(true);
         popup?.close();
@@ -39,13 +39,13 @@ function Connect({ selectPageRef }) {
     const top = window.innerHeight / 2 - height / 2;
 
     const popup = window.open(
-      "http://localhost:3000/login/youtube",
+      "https://playlist-port-backend.onrender.com/login/youtube",
       "YoutubeLogin",
       `width=${width},height=${height},top=${top},left=${left}`
     );
 
     window.addEventListener("message", (e) => {
-      if (e.origin !== "http://localhost:3000") return;
+      if (e.origin !== "https://playlist-port-backend.onrender.com") return;
       if (e.data.type === "youtube-auth") {
         setIsConnectedYoutube(true);
         popup?.close();

@@ -1,4 +1,4 @@
 ## O que falta para o deploy
 
-- Implementar responsividade
 - Atualizar o `.env`
+- Preparar APIs para producao

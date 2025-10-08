@@ -20,7 +20,7 @@ function Transfer({ transferData, setTransferData }) {
 
   const transferPlaylist = async (playlistId) => {
     try {
-      const response = await fetch("http://localhost:3000/transfer", {
+      const response = await fetch("https://playlist-port-backend.onrender.com/transfer", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
