@@ -6,6 +6,13 @@ const axios = require("axios");
 const querystring = require("querystring");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
+const Redis = require("redis");
+
+const redisClient = Redis.createClient({
+  url: "https://playlist-port-backend.onrender.com",
+});
+
+const DEFAULT_EXP = 3600; // 1h
 
 require("dotenv").config();
 
@@ -28,8 +35,13 @@ app.set("trust proxy", 1);
 
 const TRANSFER_LIMIT = process.env.TRANSFER_LIMIT;
 
-app.get("/", (req, res) => {
-  res.status(200).send("Welcome to Playlist Port!");
+const redisTestMessage = "Hello! Redis is working.";
+await redisClient.setEx("redisTestMessage", 60, redisTestMessage);
+
+app.get("/", async (req, res) => {
+  res.status(200).send(`Welcome to Playlist Port.
+    Redis status = ${await redisClient.get("redisTestMessage")}
+    `);
 });
 
 // Spotify credentials and Authorization flow
@@ -82,21 +94,8 @@ app.get("/callback/spotify", async (req, res) => {
 
     const { access_token, refresh_token } = tokenResponse.data;
 
-    res.cookie("spotify_access_token", access_token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "none",
-      maxAge: 1000 * 60 * 60 * 2,
-      signed: true,
-    });
-
-    res.cookie("spotify_refresh_token", refresh_token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "none",
-      maxAge: 1000 * 60 * 60 * 24 * 7,
-      signed: true,
-    });
+    await redisClient.setEx("sp_access_token", DEFAULT_EXP, access_token);
+    await redisClient.setEx("sp_refresh_token", DEFAULT_EXP * 24, refresh_token); // 1d
 
     res.send(`
       <script>
@@ -175,21 +174,17 @@ app.get("/callback/youtube", async (req, res) => {
       }
     );
 
-    res.cookie("youtube_access_token", tokenResponse.data.access_token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "none",
-      maxAge: 2 * 60 * 60 * 1000,
-      signed: true,
-    });
+    await redisClient.setEx(
+      "yt_access_token",
+      DEFAULT_EXP,
+      tokenResponse.data.access_token
+    );
 
-    res.cookie("youtube_refresh_token", tokenResponse.data.refresh_token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "none",
-      maxAge: 7 * 60 * 60 * 24 * 1000,
-      signed: true,
-    });
+    await redisClient.setEx(
+      "yt_refresh_token",
+      DEFAULT_EXP * 24,
+      tokenResponse.data.refresh_token
+    );
 
     res.send(`
       <script>
@@ -239,8 +234,8 @@ const getSpotifyInfo = async (playlistId, req) => {
 app.post("/transfer", async (req, res) => {
   const { origin, destination, playlistId } = req.body;
 
-  const spotifyToken = req.signedCookies.spotify_access_token;
-  const youtubeToken = req.signedCookies.youtube_access_token;
+  const spotifyToken = await redisClient.get("sp_access_token");
+  const youtubeToken = await redisClient.get("yt_access_token");
 
   if (!playlistId) {
     return res
