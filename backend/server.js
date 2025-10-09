@@ -51,7 +51,7 @@ app.get("/login/spotify", (req, res) => {
   res.redirect(authUrl);
 });
 
-app.get("/callback", async (req, res) => {
+app.get("/callback/spotify", async (req, res) => {
   const code = req.query.code || null;
   const state = req.query.state || null;
 
