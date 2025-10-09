@@ -5,6 +5,7 @@ const session = require("express-session");
 const axios = require("axios");
 const querystring = require("querystring");
 const cors = require("cors");
+const cookieParser = require("cookie-parser");
 
 require("dotenv").config();
 
@@ -12,26 +13,23 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(
-  session({
-    secret: crypto.randomBytes(16).toString("hex"),
-    resave: false,
-    saveUninitialized: false,
-  })
-);
-
-app.use(
   cors({
     origin: "https://playlist-port-frontend.vercel.app",
     credentials: true,
   })
 );
-
 app.use(express.json());
+app.use(
+  cookieParser(
+    process.env.COOKIE_SECRET || crypto.randomBytes(32).toString("hex")
+  )
+);
+app.set("trust proxy", 1);
 
 const TRANSFER_LIMIT = process.env.TRANSFER_LIMIT;
 
 app.get("/", (req, res) => {
-  res.status(200).send("Welcome to Playlist Port!")
+  res.status(200).send("Welcome to Playlist Port!");
 });
 
 // Spotify credentials and Authorization flow
@@ -56,25 +54,14 @@ app.get("/login/spotify", (req, res) => {
 });
 
 app.get("/callback/spotify", async (req, res) => {
-  const code = req.query.code || null;
-  const state = req.query.state || null;
-
-  if (state === null) {
-    return res.redirect(
-      "/#" +
-        querystring.stringify({
-          error: "state_mismatch",
-        })
-    );
-  }
-
+  const code = req.query.code;
   if (!code) return res.status(400).send("Authorization code is missing.");
 
   try {
     const params = new URLSearchParams();
     params.append("grant_type", "authorization_code");
     params.append("code", code);
-    params.append("redirect_uri", S_REDIRECT_URI);
+    params.append("redirect_uri", process.env.SPOTIFY_REDIRECT_URI);
 
     const tokenResponse = await axios.post(
       "https://accounts.spotify.com/api/token",
@@ -84,22 +71,37 @@ app.get("/callback/spotify", async (req, res) => {
           "Content-Type": "application/x-www-form-urlencoded",
           Authorization:
             "Basic " +
-            Buffer.from(S_CLIENT_ID + ":" + S_CLIENT_SECRET).toString("base64"),
+            Buffer.from(
+              process.env.SPOTIFY_CLIENT_ID +
+                ":" +
+                process.env.SPOTIFY_CLIENT_SECRET
+            ).toString("base64"),
         },
       }
     );
 
     const { access_token, refresh_token } = tokenResponse.data;
 
-    req.session.spotify_access_token = access_token;
-    req.session.spotify_refresh_token = refresh_token;
+    res.cookie("spotify_access_token", access_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "none",
+      maxAge: 1000 * 60 * 60 * 2,
+      signed: true,
+    });
+
+    res.cookie("spotify_refresh_token", refresh_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "none",
+      maxAge: 1000 * 60 * 60 * 24 * 7,
+      signed: true,
+    });
+
     res.send(`
       <script>
-        const data = ${JSON.stringify({
-          type: "spotify-auth",
-        })};
-        window.opener.postMessage(data, 'https://playlist-port-frontend.vercel.app/');
-      window.close();
+        window.opener.postMessage({ type: "spotify-auth" }, "https://playlist-port-frontend.vercel.app");
+        window.close();
       </script>
     `);
   } catch (err) {
@@ -126,7 +128,14 @@ app.get("/login/youtube", (req, res) => {
   const scopes = ["https://www.googleapis.com/auth/youtube"];
 
   const state = crypto.randomBytes(32).toString("hex");
-  req.session.youtube_state = state;
+  res.cookie("youtube_state", state, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "none",
+    maxAge: 5 * 60 * 1000,
+    signed: true,
+  });
+  req.signedCookies.youtube_state = state;
 
   const authorizationUrl = oauth2Client.generateAuthUrl({
     client_id: Y_CLIENT_ID,
@@ -144,12 +153,12 @@ app.get("/login/youtube", (req, res) => {
 app.get("/callback/youtube", async (req, res) => {
   const { code, state } = req.query;
 
-  const storedState = req.session.youtube_state;
+  const storedState = req.signedCookies.youtube_state;
 
   if (!state || state !== storedState)
     return res.status(400).send("State mismatch.");
 
-  req.session.youtube_state = null;
+  res.clearCookie("youtube_state");
 
   try {
     const tokenResponse = await axios.post(
@@ -166,8 +175,22 @@ app.get("/callback/youtube", async (req, res) => {
       }
     );
 
-    req.session.youtube_access_token = tokenResponse.data.access_token;
-    req.session.youtube_refresh_token = tokenResponse.data.refresh_token;
+    res.cookie("youtube_access_token", tokenResponse.data.access_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "none",
+      maxAge: 2 * 60 * 60 * 1000,
+      signed: true,
+    });
+
+    res.cookie("youtube_refresh_token", tokenResponse.data.refresh_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "none",
+      maxAge: 7 * 60 * 60 * 24 * 1000,
+      signed: true,
+    });
+
     res.send(`
       <script>
         const data = ${JSON.stringify({
@@ -192,7 +215,7 @@ const getSpotifyInfo = async (playlistId, req) => {
       `https://api.spotify.com/v1/playlists/${playlistId}`,
       {
         headers: {
-          Authorization: `Bearer ${req.session.spotify_access_token}`,
+          Authorization: `Bearer ${req.signedCookies.spotify_access_token}`,
         },
       }
     );
@@ -216,6 +239,9 @@ const getSpotifyInfo = async (playlistId, req) => {
 app.post("/transfer", async (req, res) => {
   const { origin, destination, playlistId } = req.body;
 
+  const spotifyToken = req.signedCookies.spotify_access_token;
+  const youtubeToken = req.signedCookies.youtube_access_token;
+
   if (!playlistId) {
     return res
       .status(400)
@@ -228,19 +254,13 @@ app.post("/transfer", async (req, res) => {
       .json({ message: "Origin and destination are required." });
   }
 
-  if (
-    (origin === "spotify" || destination === "spotify") &&
-    !req.session.spotify_access_token
-  ) {
+  if ((origin === "spotify" || destination === "spotify") && !spotifyToken) {
     return res
       .status(401)
       .json({ message: "Authentication with Spotify is required." });
   }
 
-  if (
-    (origin === "youtube" || destination === "youtube") &&
-    !req.session.youtube_access_token
-  ) {
+  if ((origin === "youtube" || destination === "youtube") && !youtubeToken) {
     return res
       .status(401)
       .json({ message: "Authentication with Youtube is required." });
@@ -250,8 +270,8 @@ app.post("/transfer", async (req, res) => {
     // Spotify -> Youtube
     if (origin === "spotify" && destination === "youtube") {
       oauth2Client.setCredentials({
-        access_token: req.session.youtube_access_token,
-        refresh_token: req.session.youtube_refresh_token,
+        access_token: youtubeToken,
+        refresh_token: req.signedCookies.youtube_refresh_token,
       });
 
       const spotifyInfo = await getSpotifyInfo(playlistId, req);
@@ -272,14 +292,14 @@ app.post("/transfer", async (req, res) => {
     // Youtube -> Spotify
     if (origin === "youtube" && destination === "spotify") {
       oauth2Client.setCredentials({
-        access_token: req.session.youtube_access_token,
-        refresh_token: req.session.youtube_refresh_token,
+        access_token: youtubeToken,
+        refresh_token: req.signedCookies.youtube_refresh_token,
       });
 
       // Recupera user ID do Spotify
       const userResponse = await axios.get("https://api.spotify.com/v1/me", {
         headers: {
-          Authorization: `Bearer ${req.session.spotify_access_token}`,
+          Authorization: `Bearer ${spotifyToken}`,
         },
       });
       const spotifyUserId = userResponse.data.id;
@@ -309,7 +329,7 @@ app.post("/transfer", async (req, res) => {
         {
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${req.session.spotify_access_token}`,
+            Authorization: `Bearer ${spotifyToken}`,
           },
         }
       );
@@ -330,7 +350,7 @@ app.post("/transfer", async (req, res) => {
                 limit: 1,
               },
               headers: {
-                Authorization: `Bearer ${req.session.spotify_access_token}`,
+                Authorization: `Bearer ${spotifyToken}`,
               },
             }
           );
@@ -348,7 +368,7 @@ app.post("/transfer", async (req, res) => {
         {
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${req.session.spotify_access_token}`,
+            Authorization: `Bearer ${spotifyToken}`,
           },
         }
       );
@@ -361,8 +381,8 @@ app.post("/transfer", async (req, res) => {
     // Youtube -> Youtube
     if (origin === "youtube" && destination === "youtube") {
       oauth2Client.setCredentials({
-        access_token: req.session.youtube_access_token,
-        refresh_token: req.session.youtube_refresh_token,
+        access_token: youtubeToken,
+        refresh_token: req.signedCookies.youtube_refresh_token,
       });
 
       const playlistResponse = await youtube.playlists.list({
@@ -395,7 +415,7 @@ app.post("/transfer", async (req, res) => {
     if (origin === "spotify" && destination === "spotify") {
       const userResponse = await axios.get("https://api.spotify.com/v1/me", {
         headers: {
-          Authorization: `Bearer ${req.session.spotify_access_token}`,
+          Authorization: `Bearer ${spotifyToken}`,
         },
       });
       const spotifyUserId = userResponse.data.id;
@@ -404,7 +424,7 @@ app.post("/transfer", async (req, res) => {
         `https://api.spotify.com/v1/playlists/${playlistId}`,
         {
           headers: {
-            Authorization: `Bearer ${req.session.spotify_access_token}`,
+            Authorization: `Bearer ${spotifyToken}`,
           },
         }
       );
@@ -423,7 +443,7 @@ app.post("/transfer", async (req, res) => {
         {
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${req.session.spotify_access_token}`,
+            Authorization: `Bearer ${spotifyToken}`,
           },
         }
       );
@@ -436,7 +456,7 @@ app.post("/transfer", async (req, res) => {
         {
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${req.session.spotify_access_token}`,
+            Authorization: `Bearer ${spotifyToken}`,
           },
         }
       );
