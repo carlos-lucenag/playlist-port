@@ -21,7 +21,7 @@ app.use(
 
 app.use(
   cors({
-    origin: "https://playlist-port-frontend.vercel.app/",
+    origin: "https://playlist-port-frontend.vercel.app",
     credentials: true,
   })
 );
