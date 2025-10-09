@@ -249,6 +249,8 @@ app.post("/transfer", async (req, res) => {
   const { origin, destination, playlistId } = req.body;
 
   const spotifyToken = await redisClient.get("sp_access_token");
+  console.log("sp token:", spotifyToken);
+
   const youtubeToken = await redisClient.get("yt_access_token");
 
   if (!playlistId) {
@@ -427,6 +429,8 @@ app.post("/transfer", async (req, res) => {
           Authorization: `Bearer ${spotifyToken}`,
         },
       });
+      console.log(userResponse.data.id);
+
       const spotifyUserId = userResponse.data.id;
 
       const playlistResponse = await axios.get(
