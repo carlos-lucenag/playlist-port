@@ -30,6 +30,10 @@ app.use(express.json());
 
 const TRANSFER_LIMIT = process.env.TRANSFER_LIMIT;
 
+app.get("/", (req, res) => {
+  res.status(200).send("Welcome to Playlist Port!")
+});
+
 // Spotify credentials and Authorization flow
 const S_CLIENT_ID = process.env.SPOTIFY_CLIENT_ID;
 const S_CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET;
