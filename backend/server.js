@@ -8,13 +8,30 @@ const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const Redis = require("redis");
 
+require("dotenv").config();
+
 const redisClient = Redis.createClient({
-  url: "https://playlist-port-backend.onrender.com",
+  username: "default",
+  password: process.env.REDIS_PASSWORD,
+  socket: {
+    host: process.env.REDIS_HOST,
+    port: process.env.REDIS_PORT,
+  },
 });
 
-const DEFAULT_EXP = 3600; // 1h
+redisClient.on("error", (err) => console.log("Redis Client Error", err));
 
-require("dotenv").config();
+const redisConnect = async () => {
+  await redisClient.connect();
+
+  await redisClient.set("redisConnection", "Redis is connected.");
+  const result = await redisClient.get("redisConnection");
+  console.log(result);
+};
+
+redisConnect();
+
+const DEFAULT_EXP = 3600; // 1h
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -36,7 +53,7 @@ app.set("trust proxy", 1);
 const TRANSFER_LIMIT = process.env.TRANSFER_LIMIT;
 
 const redisTestMessage = "Hello! Redis is working.";
-await redisClient.setEx("redisTestMessage", 60, redisTestMessage);
+redisClient.setEx("redisTestMessage", 60, redisTestMessage);
 
 app.get("/", async (req, res) => {
   res.status(200).send(`Welcome to Playlist Port.
@@ -95,7 +112,11 @@ app.get("/callback/spotify", async (req, res) => {
     const { access_token, refresh_token } = tokenResponse.data;
 
     await redisClient.setEx("sp_access_token", DEFAULT_EXP, access_token);
-    await redisClient.setEx("sp_refresh_token", DEFAULT_EXP * 24, refresh_token); // 1d
+    await redisClient.setEx(
+      "sp_refresh_token",
+      DEFAULT_EXP * 24,
+      refresh_token
+    ); // 1d
 
     res.send(`
       <script>
