@@ -144,18 +144,11 @@ const oauth2Client = new google.auth.OAuth2(
   Y_REDIRECT_URI
 );
 
-app.get("/login/youtube", (req, res) => {
+app.get("/login/youtube", async (req, res) => {
   const scopes = ["https://www.googleapis.com/auth/youtube"];
 
   const state = crypto.randomBytes(32).toString("hex");
-  res.cookie("youtube_state", state, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "none",
-    maxAge: 5 * 60 * 1000,
-    signed: true,
-  });
-  req.signedCookies.youtube_state = state;
+  await redisClient.setEx("yt_state", DEFAULT_EXP, state);
 
   const authorizationUrl = oauth2Client.generateAuthUrl({
     client_id: Y_CLIENT_ID,
@@ -173,7 +166,7 @@ app.get("/login/youtube", (req, res) => {
 app.get("/callback/youtube", async (req, res) => {
   const { code, state } = req.query;
 
-  const storedState = req.signedCookies.youtube_state;
+  const storedState = await redisClient.get("yt_state");
 
   if (!state || state !== storedState)
     return res.status(400).send("State mismatch.");
