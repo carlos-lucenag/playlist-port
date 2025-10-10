@@ -446,6 +446,8 @@ app.post("/transfer", async (req, res) => {
         (item) => item.track.uri
       );
 
+      console.log("antes");
+
       const newPlaylistResponse = await axios.post(
         `https://api.spotify.com/v1/users/${spotifyUserId}/playlists`,
         {
@@ -460,6 +462,9 @@ app.post("/transfer", async (req, res) => {
           },
         }
       );
+
+      console.log("depois");
+
       const newPlaylistId = newPlaylistResponse.data.id;
       const newPlaylistUrl = newPlaylistResponse.data.external_urls.spotify;
 
