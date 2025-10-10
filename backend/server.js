@@ -248,6 +248,8 @@ const getSpotifyInfo = async (playlistId, req) => {
 app.post("/transfer", async (req, res) => {
   const { origin, destination, playlistId } = req.body;
 
+  console.log("pid:", playlistId);
+
   const spotifyToken = await redisClient.get("sp_access_token");
   console.log("sp token:", spotifyToken);
 
