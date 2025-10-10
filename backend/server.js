@@ -111,7 +111,7 @@ app.get("/callback/spotify", async (req, res) => {
         const data = ${JSON.stringify({
           type: "spotify-auth",
         })};
-        window.opener.postMessage(data, ${FRONTEND_URL});
+        window.opener.postMessage(data, '${FRONTEND_URL}');
       window.close();
       </script>
     `);
@@ -197,7 +197,7 @@ app.get("/callback/youtube", async (req, res) => {
         const data = ${JSON.stringify({
           type: "youtube-auth",
         })};
-        window.opener.postMessage(data, ${FRONTEND_URL});
+        window.opener.postMessage(data, '${FRONTEND_URL}');
       window.close();
       </script>
     `);
