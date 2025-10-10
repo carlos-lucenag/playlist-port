@@ -224,22 +224,22 @@ const getSpotifyInfo = async (playlistId, spotifyToken) => {
     const response = await axios.get(
       `https://api.spotify.com/v1/playlists/${playlistId}`,
       {
+        params: {
+          limit: TRANSFER_LIMIT, // Garante que o limite de faixas seja respeitado.
+        },
         headers: {
           Authorization: `Bearer ${spotifyToken}`,
         },
       }
     );
-    const result = response.data;
-    const playlistName = result.name;
-    const items = result.tracks.items;
-    let spotifyTracks = [];
+    
+    const playlistName = response.data.name;
+    
+    const tracks = response.data.tracks.items.map(
+      (item) => item.track.external_ids.isrc
+    );
 
-    for (let i = 0; i < TRANSFER_LIMIT; i++) {
-      const item = items[i];
-      spotifyTracks.push(item.track.external_ids.isrc);
-    }
-
-    return { playlistName: playlistName, tracks: spotifyTracks };
+    return { playlistName: playlistName, tracks: tracks };
   } catch (err) {
     console.error("Error while getting Spotify info:", err);
     throw err;
