@@ -91,7 +91,6 @@ function App() {
 
       <section className="h-dvh" ref={selectPageRef}>
         <Select
-          BACKEND_URL={BACKEND_URL}
           transferData={transferData}
           setTransferData={setTransferData}
           transferPageRef={transferPageRef}

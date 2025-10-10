@@ -1,20 +1,22 @@
 import { useState } from "react";
 
-function Transfer({ transferData, setTransferData }) {
+function Transfer({ BACKEND_URL, transferData, setTransferData }) {
   const [isLoading, setIsLoading] = useState(false);
   const [transferResult, setTransferResult] = useState(null);
   const [error, setError] = useState(null);
 
   const extractPlaylistId = (playlistUrl) => {
     let playlistId = "";
+
+    const spRegex = /playlist\/(.{22})/;
+    const ytRegex = /playlist?list=\/(.{34})/;
+
     switch (transferData.origin) {
       case "spotify":
-        var spRegex = /playlist\/(.{22})/;
         var spMatchResult = playlistUrl.match(spRegex);
         playlistId = spMatchResult ? spMatchResult[1] : null;
         break;
       case "youtube":
-        var ytRegex = /playlist?list=\/(.{34})/;
         var ytMatchResult = playlistUrl.match(ytRegex);
         playlistId = ytMatchResult ? ytMatchResult[1] : null;
         break;
@@ -25,21 +27,18 @@ function Transfer({ transferData, setTransferData }) {
 
   const transferPlaylist = async (playlistId) => {
     try {
-      const response = await fetch(
-        "https://playlist-port-backend.onrender.com/transfer",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            origin: transferData.origin,
-            destination: transferData.destination,
-            playlistId: playlistId,
-          }),
-          credentials: "include",
-        }
-      );
+      const response = await fetch(`${BACKEND_URL}/transfer`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          origin: transferData.origin,
+          destination: transferData.destination,
+          playlistId: playlistId,
+        }),
+        credentials: "include",
+      });
 
       if (response.status === 401) {
         const data = await response.json();
@@ -75,7 +74,12 @@ function Transfer({ transferData, setTransferData }) {
     setTransferResult(null);
     setError(null);
 
+    console.log("playlist url:", transferData.playlistUrl);
+
     const playlistId = extractPlaylistId(transferData.playlistUrl);
+
+    console.log("post playlistId:", playlistId);
+
     await transferPlaylist(playlistId);
   };
 
