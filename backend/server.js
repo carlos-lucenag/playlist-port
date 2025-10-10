@@ -194,11 +194,12 @@ app.get("/callback/youtube", async (req, res) => {
       tokenResponse.data.access_token
     );
 
-    await redisClient.setEx(
-      "yt_refresh_token",
-      DEFAULT_EXP * 24,
-      tokenResponse.data.refresh_token
-    );
+    if (tokenResponse.data.refresh_token) {
+      await redisClient.set(
+        "yt_refresh_token",
+        tokenResponse.data.refresh_token
+      );
+    }
 
     res.send(`
       <script>
@@ -211,10 +212,6 @@ app.get("/callback/youtube", async (req, res) => {
     `);
   } catch (err) {
     console.error(
-      "Error while connecting to Youtube",
-      err.response ? err.response.data : err.message
-    );
-    console.log(
       "Error while connecting to Youtube",
       err.response ? err.response.data : err.message
     );
@@ -252,11 +249,7 @@ const getSpotifyInfo = async (playlistId, req) => {
 app.post("/transfer", async (req, res) => {
   const { origin, destination, playlistId } = req.body;
 
-  console.log("pid:", playlistId);
-
   const spotifyToken = await redisClient.get("sp_access_token");
-  console.log("sp token:", spotifyToken);
-
   const youtubeToken = await redisClient.get("yt_access_token");
 
   if (!playlistId) {
@@ -435,7 +428,6 @@ app.post("/transfer", async (req, res) => {
           Authorization: `Bearer ${spotifyToken}`,
         },
       });
-      console.log(userResponse.data.id);
 
       const spotifyUserId = userResponse.data.id;
 
@@ -452,8 +444,6 @@ app.post("/transfer", async (req, res) => {
         (item) => item.track.uri
       );
 
-      console.log("antes");
-
       const newPlaylistResponse = await axios.post(
         `https://api.spotify.com/v1/users/${spotifyUserId}/playlists`,
         {
@@ -468,8 +458,6 @@ app.post("/transfer", async (req, res) => {
           },
         }
       );
-
-      console.log("depois");
 
       const newPlaylistId = newPlaylistResponse.data.id;
       const newPlaylistUrl = newPlaylistResponse.data.external_urls.spotify;
