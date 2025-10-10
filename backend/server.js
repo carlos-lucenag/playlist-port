@@ -214,6 +214,10 @@ app.get("/callback/youtube", async (req, res) => {
       "Error while connecting to Youtube",
       err.response ? err.response.data : err.message
     );
+    console.log(
+      "Error while connecting to Youtube",
+      err.response ? err.response.data : err.message
+    );
     res.status(500).send("Fail in Google authentication.");
   }
 });
