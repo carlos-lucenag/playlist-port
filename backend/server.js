@@ -219,13 +219,13 @@ app.get("/callback/youtube", async (req, res) => {
   }
 });
 
-const getSpotifyInfo = async (playlistId, req) => {
+const getSpotifyInfo = async (playlistId, spotifyToken) => {
   try {
     const response = await axios.get(
       `https://api.spotify.com/v1/playlists/${playlistId}`,
       {
         headers: {
-          Authorization: `Bearer ${req.signedCookies.spotify_access_token}`,
+          Authorization: `Bearer ${spotifyToken}`,
         },
       }
     );
@@ -251,6 +251,7 @@ app.post("/transfer", async (req, res) => {
 
   const spotifyToken = await redisClient.get("sp_access_token");
   const youtubeToken = await redisClient.get("yt_access_token");
+  const youtubeRefToken = await redisClient.get("yt_refresh_token");
 
   if (!playlistId) {
     return res
@@ -281,10 +282,10 @@ app.post("/transfer", async (req, res) => {
     if (origin === "spotify" && destination === "youtube") {
       oauth2Client.setCredentials({
         access_token: youtubeToken,
-        refresh_token: req.signedCookies.youtube_refresh_token,
+        refresh_token: youtubeRefToken,
       });
 
-      const spotifyInfo = await getSpotifyInfo(playlistId, req);
+      const spotifyInfo = await getSpotifyInfo(playlistId, spotifyToken);
       const youtubePlaylistId = await createYoutubePlaylist(
         spotifyInfo.playlistName
       );
@@ -303,7 +304,7 @@ app.post("/transfer", async (req, res) => {
     if (origin === "youtube" && destination === "spotify") {
       oauth2Client.setCredentials({
         access_token: youtubeToken,
-        refresh_token: req.signedCookies.youtube_refresh_token,
+        refresh_token: youtubeRefToken,
       });
 
       // Recupera user ID do Spotify
@@ -392,7 +393,7 @@ app.post("/transfer", async (req, res) => {
     if (origin === "youtube" && destination === "youtube") {
       oauth2Client.setCredentials({
         access_token: youtubeToken,
-        refresh_token: req.signedCookies.youtube_refresh_token,
+        refresh_token: youtubeRefToken,
       });
 
       const playlistResponse = await youtube.playlists.list({
