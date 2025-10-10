@@ -245,6 +245,7 @@ app.post("/transfer", async (req, res) => {
   const youtubeRefToken = await redisClient.get("yt_refresh_token");
 
   if (!playlistId) {
+    console.log("playlist id:", playlistId);
     return res
       .status(400)
       .json({ message: "A valid playlist ID is required." });
