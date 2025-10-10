@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-function Connect({ selectPageRef }) {
+function Connect({ BACKEND_URL, selectPageRef }) {
   const [isConnectedSpotify, setIsConnectedSpotify] = useState(false);
   const [isConnectedYoutube, setIsConnectedYoutube] = useState(false);
 
@@ -18,13 +18,13 @@ function Connect({ selectPageRef }) {
     const top = window.innerHeight / 2 - height / 2;
 
     const popup = window.open(
-      "https://playlist-port-backend.onrender.com/login/spotify",
+      `${BACKEND_URL}/login/spotify`,
       "SpotifyLogin",
       `width=${width},height=${height},top=${top},left=${left}`
     );
 
     window.addEventListener("message", (e) => {
-      if (e.origin !== "https://playlist-port-backend.onrender.com") return;
+      if (e.origin !== BACKEND_URL) return;
       if (e.data.type === "spotify-auth") {
         setIsConnectedSpotify(true);
         popup?.close();
@@ -39,13 +39,13 @@ function Connect({ selectPageRef }) {
     const top = window.innerHeight / 2 - height / 2;
 
     const popup = window.open(
-      "https://playlist-port-backend.onrender.com/login/youtube",
+      `${BACKEND_URL}/login/youtube`,
       "YoutubeLogin",
       `width=${width},height=${height},top=${top},left=${left}`
     );
 
     window.addEventListener("message", (e) => {
-      if (e.origin !== "https://playlist-port-backend.onrender.com") return;
+      if (e.origin !== BACKEND_URL) return;
       if (e.data.type === "youtube-auth") {
         setIsConnectedYoutube(true);
         popup?.close();
@@ -58,7 +58,9 @@ function Connect({ selectPageRef }) {
       <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-[#181C17] text-shadow-md font-bold tracking-wide">
         1. Connect
       </h1>
-      <p className="mt-3 md:mt-5 text-xl sm:text-2xl md:text-3xl text-[#636B61] italic">To your accounts</p>
+      <p className="mt-3 md:mt-5 text-xl sm:text-2xl md:text-3xl text-[#636B61] italic">
+        To your accounts
+      </p>
 
       <div className="grid mt-[12vh] md:mt-[20vh] gap-4 md:gap-5 self-center text-[#395D28]">
         <button

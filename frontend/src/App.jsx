@@ -7,12 +7,16 @@ import githubIcon from "./assets/icon-github.svg";
 import linkedinIcon from "./assets/icon-linkedin.svg";
 import gmailIcon from "./assets/icon-gmail.svg";
 
+const VITE_ENV = import.meta.env.VITE_ENV;
+let BACKEND_URL = "https://playlist-port-backend.onrender.com";
+
+if (VITE_ENV === "DEV") BACKEND_URL = "http://localhost:3000";
+
 function App() {
   const connectPageRef = useRef(null);
   const selectPageRef = useRef(null);
   const transferPageRef = useRef(null);
 
-  // Estado compartilhado entre componentes
   const [transferData, setTransferData] = useState({
     origin: "",
     destination: "",
@@ -82,11 +86,12 @@ function App() {
             ry="10"
           />
         </svg>
-        <Connect selectPageRef={selectPageRef} />
+        <Connect BACKEND_URL={BACKEND_URL} selectPageRef={selectPageRef} />
       </section>
 
       <section className="h-dvh" ref={selectPageRef}>
         <Select
+          BACKEND_URL={BACKEND_URL}
           transferData={transferData}
           setTransferData={setTransferData}
           transferPageRef={transferPageRef}
@@ -95,6 +100,7 @@ function App() {
 
       <section className="h-[calc(dvh/3)] mb-24" ref={transferPageRef}>
         <Transfer
+          BACKEND_URL={BACKEND_URL}
           transferData={transferData}
           setTransferData={setTransferData}
         />

@@ -19,6 +19,7 @@ function Transfer({ transferData, setTransferData }) {
         playlistId = ytMatchResult ? ytMatchResult[1] : null;
         break;
     }
+    console.log("playlistId:", playlistId);
     return playlistId;
   };
 

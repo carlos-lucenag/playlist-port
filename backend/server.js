@@ -1,11 +1,8 @@
 const { google } = require("googleapis");
 const crypto = require("crypto");
 const express = require("express");
-const session = require("express-session");
 const axios = require("axios");
-const querystring = require("querystring");
 const cors = require("cors");
-const cookieParser = require("cookie-parser");
 const Redis = require("redis");
 
 require("dotenv").config();
@@ -31,34 +28,29 @@ const redisConnect = async () => {
 
 redisConnect();
 
+const NODE_ENV = process.env.NODE_ENV;
+let FRONTEND_URL = "https://playlist-port-frontend.vercel.app";
+
+if (NODE_ENV === "DEV") FRONTEND_URL = "http://localhost:5173";
+
 const DEFAULT_EXP = 3600; // 1h
+const TRANSFER_LIMIT = process.env.TRANSFER_LIMIT;
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(
   cors({
-    origin: "https://playlist-port-frontend.vercel.app",
+    origin: FRONTEND_URL,
     credentials: true,
   })
 );
+
 app.use(express.json());
-app.use(
-  cookieParser(
-    process.env.COOKIE_SECRET || crypto.randomBytes(32).toString("hex")
-  )
-);
 app.set("trust proxy", 1);
 
-const TRANSFER_LIMIT = process.env.TRANSFER_LIMIT;
-
-const redisTestMessage = "Hello! Redis is working.";
-redisClient.setEx("redisTestMessage", 60, redisTestMessage);
-
 app.get("/", async (req, res) => {
-  res.status(200).send(`Welcome to Playlist Port.
-    Redis status = ${await redisClient.get("redisTestMessage")}
-    `);
+  res.status(200).send("Welcome to Playlist Port.");
 });
 
 // Spotify credentials and Authorization flow
@@ -90,7 +82,7 @@ app.get("/callback/spotify", async (req, res) => {
     const params = new URLSearchParams();
     params.append("grant_type", "authorization_code");
     params.append("code", code);
-    params.append("redirect_uri", process.env.SPOTIFY_REDIRECT_URI);
+    params.append("redirect_uri", S_REDIRECT_URI);
 
     const tokenResponse = await axios.post(
       "https://accounts.spotify.com/api/token",
@@ -100,11 +92,7 @@ app.get("/callback/spotify", async (req, res) => {
           "Content-Type": "application/x-www-form-urlencoded",
           Authorization:
             "Basic " +
-            Buffer.from(
-              process.env.SPOTIFY_CLIENT_ID +
-                ":" +
-                process.env.SPOTIFY_CLIENT_SECRET
-            ).toString("base64"),
+            Buffer.from(S_CLIENT_ID + ":" + S_CLIENT_SECRET).toString("base64"),
         },
       }
     );
@@ -116,12 +104,15 @@ app.get("/callback/spotify", async (req, res) => {
       "sp_refresh_token",
       DEFAULT_EXP * 24,
       refresh_token
-    ); // 1d
+    );
 
     res.send(`
       <script>
-        window.opener.postMessage({ type: "spotify-auth" }, "https://playlist-port-frontend.vercel.app");
-        window.close();
+        const data = ${JSON.stringify({
+          type: "spotify-auth",
+        })};
+        window.opener.postMessage(data, ${FRONTEND_URL});
+      window.close();
       </script>
     `);
   } catch (err) {
@@ -171,7 +162,7 @@ app.get("/callback/youtube", async (req, res) => {
   if (!state || state !== storedState)
     return res.status(400).send("State mismatch.");
 
-  res.clearCookie("youtube_state");
+  await redisClient.del("yt_state");
 
   try {
     const tokenResponse = await axios.post(
@@ -206,7 +197,7 @@ app.get("/callback/youtube", async (req, res) => {
         const data = ${JSON.stringify({
           type: "youtube-auth",
         })};
-        window.opener.postMessage(data, 'https://playlist-port-frontend.vercel.app/');
+        window.opener.postMessage(data, ${FRONTEND_URL});
       window.close();
       </script>
     `);
@@ -322,11 +313,9 @@ app.post("/transfer", async (req, res) => {
       });
 
       if (!playlistResponse)
-        return res
-          .status(500)
-          .json({
-            message: "No playlist found, consider changing the provided URL",
-          });
+        return res.status(500).json({
+          message: "No playlist found, consider changing the provided URL",
+        });
 
       const playlistName = playlistResponse.data.items[0].snippet.title;
 
