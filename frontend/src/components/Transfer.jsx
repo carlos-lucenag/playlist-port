@@ -9,10 +9,14 @@ function Transfer({ transferData, setTransferData }) {
     let playlistId = "";
     switch (transferData.origin) {
       case "spotify":
-        playlistId = playlistUrl.slice(-22);
+        var spRegex = /playlist\/(.{22})/;
+        var spMatchResult = playlistUrl.match(spRegex);
+        playlistId = spMatchResult ? spMatchResult[1] : null;
         break;
       case "youtube":
-        playlistId = playlistUrl.slice(-34);
+        var ytRegex = /playlist?list=\/(.{34})/;
+        var ytMatchResult = playlistUrl.match(ytRegex);
+        playlistId = ytMatchResult ? ytMatchResult[1] : null;
         break;
     }
     return playlistId;
@@ -20,18 +24,21 @@ function Transfer({ transferData, setTransferData }) {
 
   const transferPlaylist = async (playlistId) => {
     try {
-      const response = await fetch("https://playlist-port-backend.onrender.com/transfer", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          origin: transferData.origin,
-          destination: transferData.destination,
-          playlistId: playlistId,
-        }),
-        credentials: "include",
-      });
+      const response = await fetch(
+        "https://playlist-port-backend.onrender.com/transfer",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            origin: transferData.origin,
+            destination: transferData.destination,
+            playlistId: playlistId,
+          }),
+          credentials: "include",
+        }
+      );
 
       if (response.status === 401) {
         const data = await response.json();
@@ -69,14 +76,16 @@ function Transfer({ transferData, setTransferData }) {
 
     const playlistId = extractPlaylistId(transferData.playlistUrl);
     await transferPlaylist(playlistId);
-  }
+  };
 
   return (
     <div className="mt-[10vh] md:mt-[14vh] flex flex-col">
       <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-[#181C17] text-shadow-md font-bold tracking-wide">
         3. Paste
       </h1>
-      <p className="mt-3 md:mt-5 text-xl sm:text-2xl md:text-3xl text-[#636B61] italic">Your playlist URL</p>
+      <p className="mt-3 md:mt-5 text-xl sm:text-2xl md:text-3xl text-[#636B61] italic">
+        Your playlist URL
+      </p>
       <form className="flex flex-col" onSubmit={handleTransfer}>
         <input
           type="text"
@@ -100,7 +109,9 @@ function Transfer({ transferData, setTransferData }) {
         />
         <button
           type="submit"
-          disabled={isLoading || !transferData.origin || !transferData.destination}
+          disabled={
+            isLoading || !transferData.origin || !transferData.destination
+          }
           className="
             border-2 border-[#FAFAF9] 
             text-[#395D28] text-2xl sm:text-3xl md:text-4xl font-medium tracking-wide
@@ -119,9 +130,11 @@ function Transfer({ transferData, setTransferData }) {
         </button>
 
         {error && (
-          <p className="text-red-500 text-sm md:text-base text-center mt-4">{error}</p>
+          <p className="text-red-500 text-sm md:text-base text-center mt-4">
+            {error}
+          </p>
         )}
-        
+
         {transferResult && (
           <div className="text-center mt-4">
             <p className="text-green-600 font-semibold mb-2 text-sm md:text-base">

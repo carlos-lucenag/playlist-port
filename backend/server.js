@@ -232,9 +232,9 @@ const getSpotifyInfo = async (playlistId, spotifyToken) => {
         },
       }
     );
-    
+
     const playlistName = response.data.name;
-    
+
     const tracks = response.data.tracks.items.map(
       (item) => item.track.external_ids.isrc
     );
@@ -320,6 +320,14 @@ app.post("/transfer", async (req, res) => {
         part: ["snippet,contentDetails"],
         id: playlistId,
       });
+
+      if (!playlistResponse)
+        return res
+          .status(500)
+          .json({
+            message: "No playlist found, consider changing the provided URL",
+          });
+
       const playlistName = playlistResponse.data.items[0].snippet.title;
 
       const itemsResponse = await youtube.playlistItems.list({
@@ -406,7 +414,7 @@ app.post("/transfer", async (req, res) => {
       const itemsResponse = await youtube.playlistItems.list({
         part: ["snippet,contentDetails"],
         playlistId: playlistId,
-        maxResults: 50,
+        maxResults: TRANSFER_LIMIT,
       });
       const trackTitles = getYoutubeTitles(itemsResponse.data.items);
 
