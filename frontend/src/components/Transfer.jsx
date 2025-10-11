@@ -8,19 +8,23 @@ function Transfer({ BACKEND_URL, transferData, setTransferData }) {
   const extractPlaylistId = (playlistUrl) => {
     let playlistId = "";
 
-    const spRegex = /playlist\/(.{22})/;
-    const ytRegex = /playlist?list=\/(.{34})/;
+    const spRegex = /(?:playlist\/|playlist:)([A-Za-z0-9]{22})/;
+    const ytRegex = /[?&]list=([A-Za-z0-9_-]+)/;
 
     switch (transferData.origin) {
       case "spotify":
-        var spMatchResult = playlistUrl.match(spRegex);
-        playlistId = spMatchResult ? spMatchResult[1] : null;
+        const spMatch = playlistUrl.match(spRegex);
+        playlistId = spMatch ? spMatch[1] : null;
         break;
       case "youtube":
-        var ytMatchResult = playlistUrl.match(ytRegex);
-        playlistId = ytMatchResult ? ytMatchResult[1] : null;
+        const ytMatch = playlistUrl.match(ytRegex);
+        playlistId = ytMatch ? ytMatch[1] : null;
         break;
+      default:
+        console.warn("⚠️ origem desconhecida:", transferData.origin);
+        playlistId = null;
     }
+
     console.log("playlistId:", playlistId);
     return playlistId;
   };
