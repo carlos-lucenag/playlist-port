@@ -1,9 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 function Transfer({ BACKEND_URL, transferData, setTransferData }) {
   const [isLoading, setIsLoading] = useState(false);
   const [transferResult, setTransferResult] = useState(null);
   const [error, setError] = useState(null);
+
+  useEffect(() => {
+    setTransferData((prevState) => ({
+      ...prevState,
+      playlistUrl: "",
+    }));
+  }, [setTransferData, transferData.origin, transferData.destination]);
 
   const extractPlaylistId = (playlistUrl) => {
     let playlistId = "";
@@ -14,14 +21,13 @@ function Transfer({ BACKEND_URL, transferData, setTransferData }) {
     switch (transferData.origin) {
       case "spotify":
         var spMatchResult = playlistUrl.match(spRegex);
-        playlistId = spMatchResult ? spMatchResult[1] : null;
+        playlistId = spMatchResult ? spMatchResult[0] : null;
         break;
       case "youtube":
         var ytMatchResult = playlistUrl.match(ytRegex);
-        playlistId = ytMatchResult ? ytMatchResult[1] : null;
+        playlistId = ytMatchResult ? ytMatchResult[0] : null;
         break;
     }
-    console.log("playlistId:", playlistId);
     return playlistId;
   };
 
@@ -74,11 +80,7 @@ function Transfer({ BACKEND_URL, transferData, setTransferData }) {
     setTransferResult(null);
     setError(null);
 
-    console.log("playlist url:", transferData.playlistUrl);
-
     const playlistId = extractPlaylistId(transferData.playlistUrl);
-
-    console.log("post playlistId:", playlistId);
 
     await transferPlaylist(playlistId);
   };
